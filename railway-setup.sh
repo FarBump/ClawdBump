@@ -5,13 +5,6 @@
 
 echo "Setting up Railway environment variables..."
 
-railway variables set TELEGRAM_BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN_HERE"
-railway variables set TELEGRAM_BOT_USERNAME="ClawdBumpbot"
-railway variables set FARBUMP_API_URL="https://farbump.vercel.app"
-railway variables set FARBUMP_WEB_URL="https://farbump.vercel.app"
-railway variables set NODE_ENV="production"
-railway variables set PORT="18789"
-
 echo ""
 echo "⚠️  IMPORTANT: Set your Gemini API key manually!"
 echo ""
