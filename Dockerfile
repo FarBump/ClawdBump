@@ -20,14 +20,17 @@ RUN npm install -g pnpm@10.23.0
 # Copy ALL files (simpler, like successful template)
 COPY . .
 
+# Skip postinstall script (not needed in Docker)
+ENV CLAWDBOT_SKIP_POSTINSTALL=1
+
 # Install all dependencies (including dev deps needed for build)
 RUN pnpm install --ignore-scripts
 
 # Build TypeScript to JavaScript
 RUN pnpm build
 
-# Remove workspace config BEFORE prune (prevents "No projects matched" error)
-RUN rm -f pnpm-workspace.yaml
+# Create empty workspace.yaml to prevent "No projects matched" error
+RUN echo "packages: []" > pnpm-workspace.yaml
 
 # Remove dev dependencies after build
 ENV CI=true
