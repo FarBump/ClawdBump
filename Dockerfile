@@ -15,11 +15,11 @@ RUN apt-get update && apt-get install -y \
 RUN corepack enable
 
 # Copy package files
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml ./
 COPY patches ./patches/
 
-# Install ALL dependencies (including devDependencies for build)
-RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile || pnpm install
+# Install ALL dependencies (no lockfile since it's gitignored)
+RUN pnpm install
 
 # Copy source code
 COPY tsconfig.json ./
@@ -44,11 +44,11 @@ RUN apt-get update && apt-get install -y \
 RUN corepack enable
 
 # Copy package files for production install
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml ./
 COPY patches ./patches/
 
 # Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile || pnpm install --prod
+RUN pnpm install --prod
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist/
