@@ -1,18 +1,26 @@
-# FarBump Bot - Railway Deployment Dockerfile
-FROM node:22-alpine
+# ClawdBump Bot - Railway Deployment Dockerfile
+FROM node:20-slim
 
 # Set working directory
 WORKDIR /app
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.23.0
 
-# Copy package files
-COPY package.json pnpm-lock.yaml* ./
-COPY patches ./patches/
+# Copy package files first (for better caching)
+COPY package.json pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml* ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Copy patches if they exist
+COPY patches ./patches/ 2>/dev/null || true
+
+# Install dependencies (no frozen lockfile for Railway compatibility)
+RUN pnpm install --no-frozen-lockfile || pnpm install
 
 # Copy source code
 COPY . .
@@ -20,21 +28,11 @@ COPY . .
 # Build TypeScript
 RUN pnpm build
 
-# Create clawdbot config directory
-RUN mkdir -p /root/.clawdbot/workspace/skills
+# Create clawdbot directories
+RUN mkdir -p /root/.clawdbot/workspace
 
-# Copy FarBump skill
-COPY skills/farbump /root/.clawdbot/workspace/skills/farbump/
+# Expose port (Railway will inject PORT env var)
+EXPOSE ${PORT:-18789}
 
-# Copy production config template
-COPY railway-config.json /root/.clawdbot/clawdbot.json
-
-# Expose gateway port
-EXPOSE 18789
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:18789/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); })"
-
-# Start gateway
-CMD ["node", "dist/entry.js", "gateway", "run", "--port", "18789", "--bind", "0.0.0.0"]
+# Start gateway (use PORT from Railway environment)
+CMD node dist/entry.js gateway run --port ${PORT:-18789} --bind 0.0.0.0
