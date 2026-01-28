@@ -27,6 +27,7 @@ RUN pnpm install --ignore-scripts
 RUN pnpm build
 
 # Remove dev dependencies after build
+ENV CI=true
 RUN pnpm prune --prod
 
 # Clean up to reduce image size
