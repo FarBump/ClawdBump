@@ -94,7 +94,15 @@ cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? "google
 
 // Disable plugin services by default on Railway to save memory.
 cfg.plugins = cfg.plugins ?? {};
-cfg.plugins.enabled = false;
+// We MUST enable the bundled Telegram channel plugin (it lives under ./extensions/telegram).
+// Keep plugin loading tight to save memory.
+cfg.plugins.enabled = true;
+cfg.plugins.allow = ["telegram"];
+cfg.plugins.deny = [];
+cfg.plugins.entries = cfg.plugins.entries ?? {};
+cfg.plugins.entries.telegram = { ...(cfg.plugins.entries.telegram ?? {}), enabled: true };
+// Avoid trying to load memory plugins on tiny Railway boxes.
+cfg.plugins.slots = { ...(cfg.plugins.slots ?? {}), memory: undefined };
 
 // Reduce skill discovery overhead.
 cfg.skills = cfg.skills ?? {};
