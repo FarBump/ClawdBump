@@ -9,6 +9,55 @@ echo "Node version: $(node --version)"
 echo "NPM version: $(npm --version)"
 
 echo ""
+echo "=== Ensuring config exists ==="
+CONFIG_PATH="${CLAWDBOT_CONFIG_PATH:-${CLAWDBOT_STATE_DIR:-$HOME/.clawdbot}/clawdbot.json}"
+CONFIG_DIR="$(dirname "$CONFIG_PATH")"
+mkdir -p "$CONFIG_DIR"
+
+if [ -f "$CONFIG_PATH" ]; then
+  echo "✅ Config exists: $CONFIG_PATH"
+else
+  echo "ℹ️  Config missing; generating minimal config at: $CONFIG_PATH"
+  # Write a minimal config needed for Railway:
+  # - gateway.mode=local (required to start without interactive setup)
+  # - telegram enabled (token comes from env, not stored)
+  # - default model set (Gemini)
+  node - <<'NODE'
+import fs from "node:fs";
+import path from "node:path";
+
+const configPath =
+  process.env.CLAWDBOT_CONFIG_PATH ??
+  path.join(process.env.CLAWDBOT_STATE_DIR ?? `${process.env.HOME}/.clawdbot`, "clawdbot.json");
+
+const cfg = {
+  gateway: {
+    mode: "local",
+    bind: "0.0.0.0",
+    port: Number.parseInt(process.env.PORT ?? "18789", 10) || 18789,
+  },
+  channels: {
+    telegram: {
+      enabled: true,
+      // Intentionally omit botToken here; CLAWDBOT loads TELEGRAM_BOT_TOKEN from env.
+      dmPolicy: "open",
+      allowFrom: ["*"],
+    },
+  },
+  agents: {
+    defaults: {
+      model: { primary: "google/gemini-2.0-flash-exp" },
+    },
+  },
+};
+
+fs.mkdirSync(path.dirname(configPath), { recursive: true });
+fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
+console.log(`✅ Wrote config: ${configPath}`);
+NODE
+fi
+
+echo ""
 echo "=== Checking files ==="
 if [ -f "dist/entry.js" ]; then
   echo "✅ dist/entry.js exists"
@@ -28,6 +77,7 @@ echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (hidden)}"
 echo "NODE_ENV: ${NODE_ENV:-not set}"
 echo "CLAWDBOT_STATE_DIR: ${CLAWDBOT_STATE_DIR:-not set}"
 echo "CLAWDBOT_WORKSPACE_DIR: ${CLAWDBOT_WORKSPACE_DIR:-not set}"
+echo "CLAWDBOT_CONFIG_PATH: ${CLAWDBOT_CONFIG_PATH:-not set} (effective: ${CONFIG_PATH})"
 
 echo ""
 echo "=== Checking for pnpm (should not exist) ==="
