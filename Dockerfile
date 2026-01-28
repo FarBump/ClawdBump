@@ -7,32 +7,34 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN npm install -g pnpm@10.23.0
 
-# Copy package files first (for better caching)
-COPY package.json pnpm-workspace.yaml ./
-COPY pnpm-lock.yaml* ./
+# Copy package files
+COPY package.json ./
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
 
-# Copy patches if they exist
-COPY patches ./patches/ 2>/dev/null || true
+# Copy patches directory
+COPY patches ./patches/
 
-# Install dependencies (no frozen lockfile for Railway compatibility)
-RUN pnpm install --no-frozen-lockfile || pnpm install
+# Install dependencies (use --no-frozen-lockfile for Railway)
+RUN pnpm install --no-frozen-lockfile
 
-# Copy source code
+# Copy all source code
 COPY . .
 
-# Build TypeScript
+# Build TypeScript to JavaScript
 RUN pnpm build
 
 # Create clawdbot directories
 RUN mkdir -p /root/.clawdbot/workspace
 
-# Expose port (Railway will inject PORT env var)
-EXPOSE ${PORT:-18789}
+# Expose default port
+EXPOSE 18789
 
-# Start gateway (use PORT from Railway environment)
+# Start gateway with Railway PORT (use shell form for env var expansion)
 CMD node dist/entry.js gateway run --port ${PORT:-18789} --bind 0.0.0.0

@@ -1,48 +1,53 @@
-.git
-.worktrees
-.bun-cache
-.bun
-.tmp
-**/.tmp
-.DS_Store
-**/.DS_Store
-*.png
-*.jpg
-*.jpeg
-*.webp
-*.gif
-*.mp4
-*.mov
-*.wav
-*.mp3
 node_modules
-**/node_modules
-.pnpm-store
-**/.pnpm-store
-.turbo
-**/.turbo
-.cache
-**/.cache
-.next
-**/.next
-coverage
-**/coverage
-*.log
-tmp
-**/tmp
-
-# build artifacts
 dist
-**/dist
+.git
+.github
+.vscode
+.idea
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.env
+.env.*
+.DS_Store
+coverage
+.nyc_output
+*.swp
+*.swo
+*~
+.cache
+.parcel-cache
+.next
+out
+build
+tmp
+temp
+
+# Test files
+test
+tests
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+__tests__
+
+# Build artifacts
+*.tsbuildinfo
+.turbo
+
+# macOS/iOS/Android app files
 apps/macos/.build
 apps/ios/build
-**/*.trace
+apps/android/build
+apps/android/.gradle
+*.xcworkspace
+*.xcodeproj
 
-# large app trees not needed for CLI build
-apps/
-assets/
-Peekaboo/
-Swabble/
-Core/
-Users/
-vendor/
+# Documentation
+docs
+*.md
+!README.md
+
+# Config examples
+*.example.*
