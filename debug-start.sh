@@ -20,6 +20,15 @@ echo "CLAWDBOT_SKIP_CANVAS_HOST=$CLAWDBOT_SKIP_CANVAS_HOST"
 echo "CLAWDBOT_SKIP_GMAIL_WATCHER=$CLAWDBOT_SKIP_GMAIL_WATCHER"
 echo "CLAWDBOT_SKIP_CRON=$CLAWDBOT_SKIP_CRON"
 
+# Give V8 a bigger heap *if* the container has memory for it.
+# On Railway, the practical fix for repeated OOM is bumping service RAM (≥1GB).
+if [ -z "${NODE_OPTIONS:-}" ]; then
+  export NODE_OPTIONS="--max-old-space-size=1536"
+  echo "NODE_OPTIONS defaulted to: $NODE_OPTIONS"
+else
+  echo "NODE_OPTIONS already set: $NODE_OPTIONS"
+fi
+
 echo ""
 echo "=== Ensuring config exists ==="
 CONFIG_PATH="${CLAWDBOT_CONFIG_PATH:-${CLAWDBOT_STATE_DIR:-$HOME/.clawdbot}/clawdbot.json}"
