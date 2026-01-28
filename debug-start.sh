@@ -9,6 +9,18 @@ echo "Node version: $(node --version)"
 echo "NPM version: $(npm --version)"
 
 echo ""
+echo "=== Railway low-memory mode defaults ==="
+# These sidecars are not needed for a simple Telegram bot and can consume memory.
+export CLAWDBOT_SKIP_BROWSER_CONTROL_SERVER="${CLAWDBOT_SKIP_BROWSER_CONTROL_SERVER:-1}"
+export CLAWDBOT_SKIP_CANVAS_HOST="${CLAWDBOT_SKIP_CANVAS_HOST:-1}"
+export CLAWDBOT_SKIP_GMAIL_WATCHER="${CLAWDBOT_SKIP_GMAIL_WATCHER:-1}"
+export CLAWDBOT_SKIP_CRON="${CLAWDBOT_SKIP_CRON:-1}"
+echo "CLAWDBOT_SKIP_BROWSER_CONTROL_SERVER=$CLAWDBOT_SKIP_BROWSER_CONTROL_SERVER"
+echo "CLAWDBOT_SKIP_CANVAS_HOST=$CLAWDBOT_SKIP_CANVAS_HOST"
+echo "CLAWDBOT_SKIP_GMAIL_WATCHER=$CLAWDBOT_SKIP_GMAIL_WATCHER"
+echo "CLAWDBOT_SKIP_CRON=$CLAWDBOT_SKIP_CRON"
+
+echo ""
 echo "=== Ensuring config exists ==="
 CONFIG_PATH="${CLAWDBOT_CONFIG_PATH:-${CLAWDBOT_STATE_DIR:-$HOME/.clawdbot}/clawdbot.json}"
 CONFIG_DIR="$(dirname "$CONFIG_PATH")"
@@ -59,7 +71,8 @@ if (fs.existsSync(configPath)) {
 // Ensure minimal gateway config.
 cfg.gateway = cfg.gateway ?? {};
 cfg.gateway.mode = "local";
-cfg.gateway.bind = allowedBind.has(cfg.gateway.bind) ? cfg.gateway.bind : "lan";
+// Default to loopback: Telegram bot doesn't need inbound connections, and loopback avoids auth gating.
+cfg.gateway.bind = allowedBind.has(cfg.gateway.bind) ? cfg.gateway.bind : "loopback";
 cfg.gateway.port = Number.parseInt(process.env.PORT ?? "18789", 10) || 18789;
 cfg.gateway.auth = cfg.gateway.auth ?? {};
 cfg.gateway.auth.mode = "token";
@@ -78,6 +91,16 @@ cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
 cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? "google/gemini-2.0-flash-exp";
+
+// Disable plugin services by default on Railway to save memory.
+cfg.plugins = cfg.plugins ?? {};
+cfg.plugins.enabled = false;
+
+// Reduce skill discovery overhead.
+cfg.skills = cfg.skills ?? {};
+cfg.skills.load = cfg.skills.load ?? {};
+cfg.skills.load.watch = false;
+cfg.skills.load.extraDirs = [];
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
@@ -162,5 +185,5 @@ fi
 echo ""
 echo "=== Starting gateway ==="
 # gateway --bind expects a bind MODE (not an IP)
-exec node dist/entry.js gateway run --bind lan --port ${PORT:-18789} --token "${CLAWDBOT_GATEWAY_TOKEN}"
+exec node dist/entry.js gateway run --bind loopback --port ${PORT:-18789} --token "${CLAWDBOT_GATEWAY_TOKEN}"
 
