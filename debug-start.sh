@@ -33,7 +33,9 @@ const configPath =
 const cfg = {
   gateway: {
     mode: "local",
-    bind: "0.0.0.0",
+    // IMPORTANT: gateway.bind is NOT an IP; it must be a bind mode.
+    // Valid values: loopback | lan | tailnet | auto | custom
+    bind: "lan",
     port: Number.parseInt(process.env.PORT ?? "18789", 10) || 18789,
   },
   channels: {
@@ -58,6 +60,16 @@ NODE
 fi
 
 echo ""
+echo "=== Ensuring required state dirs + permissions ==="
+# Required dirs mentioned by doctor output:
+mkdir -p /data/.clawdbot/agents/main/sessions
+mkdir -p /data/.clawdbot/credentials
+
+# Tighten permissions (best-effort; Railway may still run as root)
+chmod 700 /data/.clawdbot || true
+chmod 600 "${CONFIG_PATH}" || true
+
+echo ""
 echo "=== Checking files ==="
 if [ -f "dist/entry.js" ]; then
   echo "✅ dist/entry.js exists"
@@ -78,6 +90,10 @@ echo "NODE_ENV: ${NODE_ENV:-not set}"
 echo "CLAWDBOT_STATE_DIR: ${CLAWDBOT_STATE_DIR:-not set}"
 echo "CLAWDBOT_WORKSPACE_DIR: ${CLAWDBOT_WORKSPACE_DIR:-not set}"
 echo "CLAWDBOT_CONFIG_PATH: ${CLAWDBOT_CONFIG_PATH:-not set} (effective: ${CONFIG_PATH})"
+
+if [ -z "${GEMINI_API_KEY:-}" ]; then
+  echo "⚠️  WARNING: GEMINI_API_KEY is NOT set. AI replies will fail. (Set Railway variable GEMINI_API_KEY)"
+fi
 
 echo ""
 echo "=== Checking for pnpm (should not exist) ==="
@@ -113,11 +129,7 @@ else
 fi
 
 echo ""
-echo "=== Applying safe doctor fixes (Telegram enable, etc.) ==="
-# This is non-interactive and safe; it should flip telegram.enabled when TELEGRAM_BOT_TOKEN is present.
-node dist/entry.js doctor --fix --yes --non-interactive || echo "⚠️ doctor --fix failed (continuing)"
-
-echo ""
 echo "=== Starting gateway ==="
-exec node dist/entry.js gateway run --bind 0.0.0.0 --port ${PORT:-18789}
+# gateway --bind expects a bind MODE (not an IP)
+exec node dist/entry.js gateway run --bind lan --port ${PORT:-18789}
 
