@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     make \
     g++ \
     git \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Enable corepack for pnpm
@@ -18,7 +19,7 @@ RUN corepack enable
 COPY package.json pnpm-workspace.yaml ./
 COPY patches ./patches/
 
-# Install ALL dependencies (no lockfile since it's gitignored)
+# Install ALL dependencies (includes dev deps for build)
 RUN pnpm install
 
 # Copy source code
@@ -26,29 +27,28 @@ COPY tsconfig.json ./
 COPY src ./src/
 COPY scripts ./scripts/
 
-# Build TypeScript (just core, skip UI)
+# Build TypeScript
 RUN pnpm exec tsc -p tsconfig.json
+
+# Prune dev dependencies (keep only production)
+RUN pnpm prune --prod
 
 # Production stage
 FROM node:20-slim
 
 WORKDIR /app
 
-# Install runtime dependencies only
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable corepack
-RUN corepack enable
-
-# Copy package files for production install
+# Copy package files
 COPY package.json pnpm-workspace.yaml ./
-COPY patches ./patches/
 
-# Install production dependencies only
-RUN pnpm install --prod
+# Copy node_modules from builder (already has production deps only)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist/
