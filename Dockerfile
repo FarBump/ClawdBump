@@ -1,40 +1,28 @@
-# ClawdBump Bot - Railway Deployment Dockerfile
+# ClawdBump Bot - Railway Deployment
 FROM node:20-slim
-
-# Set working directory
-WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    git \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm
-RUN npm install -g pnpm@10.23.0
-
-# Copy package files
-COPY package.json ./
-COPY pnpm-workspace.yaml ./
-COPY pnpm-lock.yaml ./
-
-# Copy patches directory
-COPY patches ./patches/
-
-# Install dependencies (use --no-frozen-lockfile for Railway)
-RUN pnpm install --no-frozen-lockfile
-
-# Copy all source code
-COPY . .
-
-# Build TypeScript to JavaScript
-RUN pnpm build
+# Install clawdbot globally from npm (stable release)
+RUN npm install -g clawdbot@latest
 
 # Create clawdbot directories
-RUN mkdir -p /root/.clawdbot/workspace
+RUN mkdir -p /data/.clawdbot /data/workspace
 
-# Expose default port
+# Set environment variables for persistent storage
+ENV CLAWDBOT_STATE_DIR=/data/.clawdbot
+ENV CLAWDBOT_WORKSPACE_DIR=/data/workspace
+
+# Expose port
 EXPOSE 18789
 
-# Start gateway with Railway PORT (use shell form for env var expansion)
-CMD node dist/entry.js gateway run --port ${PORT:-18789} --bind 0.0.0.0
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s \
+  CMD curl -f http://localhost:${PORT:-18789}/health || exit 1
+
+# Start gateway
+CMD clawdbot gateway run --port ${PORT:-18789} --bind 0.0.0.0

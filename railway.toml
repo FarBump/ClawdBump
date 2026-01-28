@@ -1,0 +1,9 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "clawdbot gateway run --port ${PORT:-18789} --bind 0.0.0.0"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
