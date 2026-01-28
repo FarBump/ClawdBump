@@ -38,6 +38,13 @@ RUN rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/ \
     && find extensions/ -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) ! -path "*/node_modules/*" -delete \
     && rm -f pnpm-lock.yaml pnpm-workspace.yaml
 
+# Remove packageManager field from package.json to prevent corepack from trying to use pnpm
+RUN node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json')); delete pkg.packageManager; delete pkg.pnpm; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+
+# Disable corepack to prevent auto-detection of package manager
+ENV COREPACK_ENABLE_STRICT=0
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
 # Create data directories
 RUN mkdir -p /data/.clawdbot /data/workspace
 
