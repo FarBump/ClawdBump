@@ -36,13 +36,21 @@ __tests__
 *.tsbuildinfo
 .turbo
 
-# macOS/iOS/Android app files
-apps/macos/.build
-apps/ios/build
-apps/android/build
-apps/android/.gradle
-*.xcworkspace
-*.xcodeproj
+# macOS/iOS/Android apps (not needed for server)
+apps/macos
+apps/ios
+apps/android
+apps/shared
+Swabble
+
+# UI (can skip for minimal build)
+ui
+
+# Extensions (keep only needed ones in prod)
+extensions
+
+# Vendor
+vendor
 
 # Documentation
 docs
@@ -51,3 +59,12 @@ docs
 
 # Config examples
 *.example.*
+clawdbot-config.json
+railway-config.json
+
+# Large assets
+assets
+*.png
+*.jpg
+*.svg
+*.ico
