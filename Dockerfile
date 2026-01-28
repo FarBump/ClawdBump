@@ -1,6 +1,7 @@
 # ClawdBump Bot - Railway Deployment
 # Based on successful clawdbot-railway-template
-FROM node:20-slim
+# Clawdbot runtime baseline: Node 22+
+FROM node:22-slim
 
 WORKDIR /app
 
