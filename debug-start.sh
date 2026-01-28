@@ -113,11 +113,13 @@ cfg.plugins.entries.telegram = { ...(cfg.plugins.entries.telegram ?? {}), enable
 // Avoid trying to load memory plugins on tiny Railway boxes.
 cfg.plugins.slots = { ...(cfg.plugins.slots ?? {}), memory: undefined };
 
-// Reduce skill discovery overhead.
+// Disable workspace skill loading for Railway (Telegram + FarBump only, no workspace skills needed)
 cfg.skills = cfg.skills ?? {};
 cfg.skills.load = cfg.skills.load ?? {};
 cfg.skills.load.watch = false;
 cfg.skills.load.extraDirs = [];
+// Disable workspace skills entirely to reduce memory and avoid template dependency
+cfg.skills.allowBundled = cfg.skills.allowBundled ?? [];
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");

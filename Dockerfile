@@ -36,7 +36,13 @@ RUN npm uninstall -g pnpm
 
 # Clean up source files (keep node_modules - don't prune to avoid pnpm errors)
 # IMPORTANT: do NOT delete `extensions/` — bundled channel plugins (e.g. Telegram) live there.
-RUN rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/ \
+# Keep docs/reference/templates/ for workspace skill initialization (minimal footprint)
+RUN mkdir -p /tmp/docs-ref-templates \
+    && cp -r docs/reference/templates/* /tmp/docs-ref-templates/ 2>/dev/null || true \
+    && rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/ \
+    && mkdir -p docs/reference/templates \
+    && cp -r /tmp/docs-ref-templates/* docs/reference/templates/ 2>/dev/null || true \
+    && rm -rf /tmp/docs-ref-templates \
     && rm -f pnpm-lock.yaml pnpm-workspace.yaml
 
 # Remove packageManager field from package.json to prevent corepack from trying to use pnpm
