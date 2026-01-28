@@ -16,6 +16,24 @@ mkdir -p "$CONFIG_DIR"
 
 echo "Config path: $CONFIG_PATH"
 
+# Gateway refuses bind=lan unless auth token is configured.
+echo ""
+echo "=== Ensuring gateway auth token ==="
+TOKEN_PATH="${CONFIG_DIR}/gateway-token"
+if [ -n "${CLAWDBOT_GATEWAY_TOKEN:-}" ]; then
+  echo "✅ CLAWDBOT_GATEWAY_TOKEN provided via env (hidden)"
+else
+  if [ -f "$TOKEN_PATH" ]; then
+    export CLAWDBOT_GATEWAY_TOKEN="$(cat "$TOKEN_PATH" | tr -d '\r\n')"
+    echo "✅ Loaded CLAWDBOT_GATEWAY_TOKEN from $TOKEN_PATH (hidden)"
+  else
+    export CLAWDBOT_GATEWAY_TOKEN="$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")"
+    echo -n "$CLAWDBOT_GATEWAY_TOKEN" > "$TOKEN_PATH"
+    chmod 600 "$TOKEN_PATH" || true
+    echo "✅ Generated CLAWDBOT_GATEWAY_TOKEN and saved to $TOKEN_PATH (hidden)"
+  fi
+fi
+
 # Ensure config exists AND is sane. We repair in-place because the volume may
 # already contain an old/bad config from previous runs.
 echo "=== Validating/repairing config ==="
@@ -43,6 +61,10 @@ cfg.gateway = cfg.gateway ?? {};
 cfg.gateway.mode = "local";
 cfg.gateway.bind = allowedBind.has(cfg.gateway.bind) ? cfg.gateway.bind : "lan";
 cfg.gateway.port = Number.parseInt(process.env.PORT ?? "18789", 10) || 18789;
+cfg.gateway.auth = cfg.gateway.auth ?? {};
+cfg.gateway.auth.mode = "token";
+// Token value is provided via env (CLAWDBOT_GATEWAY_TOKEN). Avoid printing it.
+cfg.gateway.auth.token = "${CLAWDBOT_GATEWAY_TOKEN}";
 
 // Ensure telegram enabled; token remains in env.
 cfg.channels = cfg.channels ?? {};
@@ -91,6 +113,7 @@ echo "=== Checking environment variables ==="
 echo "PORT: ${PORT:-not set}"
 echo "TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:+set (hidden)}"
 echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (hidden)}"
+echo "CLAWDBOT_GATEWAY_TOKEN: ${CLAWDBOT_GATEWAY_TOKEN:+set (hidden)}"
 echo "NODE_ENV: ${NODE_ENV:-not set}"
 echo "CLAWDBOT_STATE_DIR: ${CLAWDBOT_STATE_DIR:-not set}"
 echo "CLAWDBOT_WORKSPACE_DIR: ${CLAWDBOT_WORKSPACE_DIR:-not set}"
@@ -139,5 +162,5 @@ fi
 echo ""
 echo "=== Starting gateway ==="
 # gateway --bind expects a bind MODE (not an IP)
-exec node dist/entry.js gateway run --bind lan --port ${PORT:-18789}
+exec node dist/entry.js gateway run --bind lan --port ${PORT:-18789} --token "${CLAWDBOT_GATEWAY_TOKEN}"
 
