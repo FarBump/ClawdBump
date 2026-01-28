@@ -8,9 +8,30 @@
 3. **Build Config**: `railway.json` sudah optimal
 4. **Gateway Config**: Sudah set untuk Railway deployment
 
+### ⚠️ SECURITY FIRST!
+
+**IMPORTANT**: Never commit credentials to git!  
+See `SECURITY_SETUP.md` for detailed security guide.
+
 ### 📝 Yang Perlu Dilakukan:
 
-#### 1. Buat GitHub Repository Baru (5 menit)
+#### 1. Setup Credentials Securely (5 menit)
+
+```bash
+# Copy example config
+cp clawdbot-config.example.json clawdbot-config.json
+
+# Edit clawdbot-config.json and add your credentials
+# This file is gitignored - safe to add keys here
+
+# OR use environment variables (recommended for Railway)
+```
+
+**Get your credentials:**
+- Telegram: @BotFather → `/newbot` → copy token
+- Gemini: https://aistudio.google.com/apikey → Create API Key
+
+#### 2. Buat GitHub Repository Baru (5 menit)
 ```bash
 # Di GitHub:
 # - Buat repo baru (contoh: clawdbot-telegram)

@@ -30,6 +30,14 @@ Keuntungan:
 
 ---
 
+## 🔒 Security First!
+
+⚠️ **NEVER commit credentials to git!**
+
+See `SECURITY_SETUP.md` for complete security guide.
+
+---
+
 ## 📋 Langkah Persiapan
 
 ### Step 1: Environment Variables untuk Railway

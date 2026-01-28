@@ -5,7 +5,7 @@
 
 echo "Setting up Railway environment variables..."
 
-railway variables set TELEGRAM_BOT_TOKEN="8456270009:AAF-55STf9EofZVIewNYTrIRf6jYXhsuP9Y"
+railway variables set TELEGRAM_BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN_HERE"
 railway variables set TELEGRAM_BOT_USERNAME="ClawdBumpbot"
 railway variables set FARBUMP_API_URL="https://farbump.vercel.app"
 railway variables set FARBUMP_WEB_URL="https://farbump.vercel.app"

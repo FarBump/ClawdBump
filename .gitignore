@@ -69,3 +69,9 @@ USER.md
 
 # local tooling
 .serena/
+
+# Configuration files with credentials (keep local only)
+clawdbot-config.json
+**/clawdbot-config.json
+railway-config.json
+.railway-env
