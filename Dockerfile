@@ -19,7 +19,8 @@ RUN corepack enable
 COPY package.json pnpm-workspace.yaml ./
 COPY patches ./patches/
 
-# Install ALL dependencies (includes dev deps for build)
+# Install ALL dependencies (skip postinstall script for Docker build)
+ENV CLAWDBOT_SKIP_POSTINSTALL=1
 RUN pnpm install
 
 # Copy source code
