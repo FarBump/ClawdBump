@@ -26,14 +26,20 @@ RUN pnpm install --ignore-scripts
 # Build TypeScript to JavaScript
 RUN pnpm build
 
+# Remove workspace config BEFORE prune (prevents "No projects matched" error)
+RUN rm -f pnpm-workspace.yaml
+
 # Remove dev dependencies after build
 ENV CI=true
 RUN pnpm prune --prod
 
-# Clean up source files (keep extensions/ structure for runtime discovery)
+# Clean up source files and lockfile (keep extensions/ structure for runtime discovery)
 RUN rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/ \
     && find extensions/ -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) ! -path "*/node_modules/*" -delete \
-    && rm -f pnpm-workspace.yaml pnpm-lock.yaml
+    && rm -f pnpm-lock.yaml
+
+# Remove pnpm (not needed at runtime, only node)
+RUN npm uninstall -g pnpm
 
 # Create data directories
 RUN mkdir -p /data/.clawdbot /data/workspace
