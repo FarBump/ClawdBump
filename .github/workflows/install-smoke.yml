@@ -21,7 +21,7 @@ jobs:
         run: corepack enable
 
       - name: Install pnpm deps (minimal)
-        run: pnpm install --ignore-scripts --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Run installer docker tests
         env:
