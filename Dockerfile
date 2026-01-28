@@ -30,8 +30,10 @@ RUN pnpm build
 ENV CI=true
 RUN pnpm prune --prod
 
-# Clean up to reduce image size
-RUN rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/
+# Clean up source files (keep extensions/ structure for runtime discovery)
+RUN rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/ \
+    && find extensions/ -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) ! -path "*/node_modules/*" -delete \
+    && rm -f pnpm-workspace.yaml pnpm-lock.yaml
 
 # Create data directories
 RUN mkdir -p /data/.clawdbot /data/workspace
