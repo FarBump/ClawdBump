@@ -1,0 +1,28 @@
+{
+  "agent": {
+    "model": "google/gemini-2.0-flash-exp",
+    "workspace": "~/.clawdbot/workspace"
+  },
+  "providers": {
+    "google": {
+      "apiKey": "AIzaSyDTUY1VUF0GnY9EG784oxEP3LNO5ZKpVEY"
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "8456270009:AAF-55STf9EofZVIewNYTrIRf6jYXhsuP9Y",
+      "dmPolicy": "open",
+      "allowFrom": ["*"],
+      "textChunkLimit": 4000,
+      "capabilities": {
+        "inlineButtons": "all"
+      }
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "bind": "0.0.0.0",
+    "port": 18789
+  }
+}
