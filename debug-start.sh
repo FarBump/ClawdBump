@@ -113,6 +113,11 @@ else
 fi
 
 echo ""
+echo "=== Applying safe doctor fixes (Telegram enable, etc.) ==="
+# This is non-interactive and safe; it should flip telegram.enabled when TELEGRAM_BOT_TOKEN is present.
+node dist/entry.js doctor --fix --yes --non-interactive || echo "⚠️ doctor --fix failed (continuing)"
+
+echo ""
 echo "=== Starting gateway ==="
 exec node dist/entry.js gateway run --bind 0.0.0.0 --port ${PORT:-18789}
 

@@ -65,5 +65,5 @@ RUN chmod +x dist/entry.js || true
 COPY debug-start.sh /app/debug-start.sh
 RUN chmod +x /app/debug-start.sh
 
-# Start gateway with debug script (shows more info)
-CMD ["/app/debug-start.sh"]
+# Always run our bootstrap script first, even if Railway overrides the command.
+ENTRYPOINT ["/app/debug-start.sh"]
