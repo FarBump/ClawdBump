@@ -1,58 +1,31 @@
 # ClawdBump Bot - Railway Deployment
-FROM node:20-slim as builder
-
-WORKDIR /app
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    git \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Enable corepack for pnpm
-RUN corepack enable
-
-# Copy package files
-COPY package.json pnpm-workspace.yaml ./
-COPY patches ./patches/
-
-# Install ALL dependencies (skip postinstall script for Docker build)
-ENV CLAWDBOT_SKIP_POSTINSTALL=1
-RUN pnpm install
-
-# Copy source code
-COPY tsconfig.json ./
-COPY src ./src/
-COPY scripts ./scripts/
-
-# Build TypeScript
-RUN pnpm exec tsc -p tsconfig.json
-
-# Prune dev dependencies (keep only production)
-RUN pnpm prune --prod
-
-# Production stage
+# Based on successful clawdbot-railway-template
 FROM node:20-slim
 
 WORKDIR /app
 
-# Install runtime dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    git \
+    python3 \
+    make \
+    g++ \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package files
-COPY package.json pnpm-workspace.yaml ./
+# Install pnpm globally
+RUN npm install -g pnpm@10.23.0
 
-# Copy node_modules from builder (already has production deps only)
-COPY --from=builder /app/node_modules ./node_modules
+# Copy ALL files (simpler, like successful template)
+COPY . .
 
-# Copy built files from builder
-COPY --from=builder /app/dist ./dist/
+# Install dependencies and build
+RUN pnpm install --prod --ignore-scripts && \
+    pnpm build || (pnpm install --ignore-scripts && pnpm build)
+
+# Clean up to reduce image size
+RUN rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/
 
 # Create data directories
 RUN mkdir -p /data/.clawdbot /data/workspace
@@ -65,5 +38,5 @@ ENV CLAWDBOT_WORKSPACE_DIR=/data/workspace
 # Expose port
 EXPOSE 18789
 
-# Start gateway (use shell form for PORT env var)
-CMD node dist/entry.js gateway run --port ${PORT:-18789} --bind 0.0.0.0
+# Start gateway (shell form for PORT env var expansion)
+CMD node dist/entry.js gateway run --bind 0.0.0.0 --port ${PORT:-18789}

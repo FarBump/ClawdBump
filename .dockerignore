@@ -24,8 +24,6 @@ tmp
 temp
 
 # Test files
-test
-tests
 *.test.ts
 *.test.js
 *.spec.ts
@@ -36,35 +34,5 @@ __tests__
 *.tsbuildinfo
 .turbo
 
-# macOS/iOS/Android apps (not needed for server)
-apps/macos
-apps/ios
-apps/android
-apps/shared
-Swabble
-
-# UI (can skip for minimal build)
-ui
-
-# Extensions (keep only needed ones in prod)
-extensions
-
-# Vendor
-vendor
-
-# Documentation
-docs
-*.md
-!README.md
-
 # Config examples
 *.example.*
-clawdbot-config.json
-railway-config.json
-
-# Large assets
-assets
-*.png
-*.jpg
-*.svg
-*.ico
