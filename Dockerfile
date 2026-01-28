@@ -49,8 +49,13 @@ ENV CLAWDBOT_WORKSPACE_DIR=/data/workspace
 # Expose port
 EXPOSE 18789
 
-# Verify entry point exists before starting
+# Verify entry point exists and is executable
 RUN test -f dist/entry.js || (echo "ERROR: dist/entry.js not found!" && ls -la dist/ && exit 1)
+RUN chmod +x dist/entry.js || true
 
-# Start gateway with error handling
-CMD node dist/entry.js gateway run --bind 0.0.0.0 --port ${PORT:-18789} || (echo "ERROR: Gateway failed to start" && exit 1)
+# Copy debug script
+COPY debug-start.sh /app/debug-start.sh
+RUN chmod +x /app/debug-start.sh
+
+# Start gateway with debug script (shows more info)
+CMD ["/app/debug-start.sh"]
