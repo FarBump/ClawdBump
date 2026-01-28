@@ -14,15 +14,12 @@ CONFIG_PATH="${CLAWDBOT_CONFIG_PATH:-${CLAWDBOT_STATE_DIR:-$HOME/.clawdbot}/claw
 CONFIG_DIR="$(dirname "$CONFIG_PATH")"
 mkdir -p "$CONFIG_DIR"
 
-if [ -f "$CONFIG_PATH" ]; then
-  echo "✅ Config exists: $CONFIG_PATH"
-else
-  echo "ℹ️  Config missing; generating minimal config at: $CONFIG_PATH"
-  # Write a minimal config needed for Railway:
-  # - gateway.mode=local (required to start without interactive setup)
-  # - telegram enabled (token comes from env, not stored)
-  # - default model set (Gemini)
-  node - <<'NODE'
+echo "Config path: $CONFIG_PATH"
+
+# Ensure config exists AND is sane. We repair in-place because the volume may
+# already contain an old/bad config from previous runs.
+echo "=== Validating/repairing config ==="
+node - <<'NODE'
 import fs from "node:fs";
 import path from "node:path";
 
@@ -30,34 +27,42 @@ const configPath =
   process.env.CLAWDBOT_CONFIG_PATH ??
   path.join(process.env.CLAWDBOT_STATE_DIR ?? `${process.env.HOME}/.clawdbot`, "clawdbot.json");
 
-const cfg = {
-  gateway: {
-    mode: "local",
-    // IMPORTANT: gateway.bind is NOT an IP; it must be a bind mode.
-    // Valid values: loopback | lan | tailnet | auto | custom
-    bind: "lan",
-    port: Number.parseInt(process.env.PORT ?? "18789", 10) || 18789,
-  },
-  channels: {
-    telegram: {
-      enabled: true,
-      // Intentionally omit botToken here; CLAWDBOT loads TELEGRAM_BOT_TOKEN from env.
-      dmPolicy: "open",
-      allowFrom: ["*"],
-    },
-  },
-  agents: {
-    defaults: {
-      model: { primary: "google/gemini-2.0-flash-exp" },
-    },
-  },
-};
+const allowedBind = new Set(["loopback", "lan", "tailnet", "auto", "custom"]);
+
+let cfg: any = {};
+if (fs.existsSync(configPath)) {
+  try {
+    cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  } catch {
+    cfg = {};
+  }
+}
+
+// Ensure minimal gateway config.
+cfg.gateway = cfg.gateway ?? {};
+cfg.gateway.mode = "local";
+cfg.gateway.bind = allowedBind.has(cfg.gateway.bind) ? cfg.gateway.bind : "lan";
+cfg.gateway.port = Number.parseInt(process.env.PORT ?? "18789", 10) || 18789;
+
+// Ensure telegram enabled; token remains in env.
+cfg.channels = cfg.channels ?? {};
+cfg.channels.telegram = cfg.channels.telegram ?? {};
+cfg.channels.telegram.enabled = true;
+cfg.channels.telegram.dmPolicy = cfg.channels.telegram.dmPolicy ?? "open";
+cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
+
+// Ensure a default model is present (Gemini). (Will fail if GEMINI_API_KEY missing.)
+cfg.agents = cfg.agents ?? {};
+cfg.agents.defaults = cfg.agents.defaults ?? {};
+cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
+cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? "google/gemini-2.0-flash-exp";
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
-console.log(`✅ Wrote config: ${configPath}`);
+console.log(`✅ Config ensured: ${configPath}`);
 NODE
-fi
+
+echo "✅ Config exists: $CONFIG_PATH"
 
 echo ""
 echo "=== Ensuring required state dirs + permissions ==="
@@ -103,6 +108,9 @@ if command -v pnpm > /dev/null 2>&1; then
 else
   echo "✅ pnpm is not in PATH (good)"
 fi
+
+# Hard-remove pnpm if it exists (some environments may keep it around).
+rm -f /usr/local/bin/pnpm /usr/local/bin/pnpx || true
 
 echo ""
 echo "=== Checking package.json ==="
