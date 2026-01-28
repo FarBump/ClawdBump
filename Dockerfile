@@ -20,9 +20,14 @@ RUN npm install -g pnpm@10.23.0
 # Copy ALL files (simpler, like successful template)
 COPY . .
 
-# Install dependencies and build
-RUN pnpm install --prod --ignore-scripts && \
-    pnpm build || (pnpm install --ignore-scripts && pnpm build)
+# Install all dependencies (including dev deps needed for build)
+RUN pnpm install --ignore-scripts
+
+# Build TypeScript to JavaScript
+RUN pnpm build
+
+# Remove dev dependencies after build
+RUN pnpm prune --prod
 
 # Clean up to reduce image size
 RUN rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/
