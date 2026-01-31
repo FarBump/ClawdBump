@@ -104,8 +104,9 @@ cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-// Reduce bootstrap context size to prevent context overflow (llama-3.1-8b-instant has smaller context window)
-cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 2000;
+// Reduce bootstrap context size to prevent context overflow (llama-3.1-8b-instant has smaller context window ~8k tokens)
+// Very aggressive limit for small context models
+cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 500;
 // Use Groq llama-3.1-8b-instant as default (much higher daily token limit/TPD than 70b version)
 // Can be overridden via MOLT_PROVIDERS_GROQ_MODEL environment variable
 const envModel = process.env.MOLT_PROVIDERS_GROQ_MODEL;
@@ -172,7 +173,8 @@ for (const key in cfg.skills.entries) {
 // Configure compaction to prevent context overflow
 cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
 // Reserve more tokens for system prompt and workspace files to prevent overflow
-cfg.agents.defaults.compaction.reserveTokensFloor = 4000; // Higher buffer for smaller context models
+// For small context models, we need a larger buffer to prevent overflow
+cfg.agents.defaults.compaction.reserveTokensFloor = 5000; // Even higher buffer for very small context models
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
@@ -200,27 +202,17 @@ create_template() {
   echo "✅ Created/overwritten $filename (template + workspace) - minimal for context limits"
 }
 
-# IDENTITY.md - Ultra-minimal
-create_template "IDENTITY.md" '---
-summary: "Identity"
-read_when:
-  - Bootstrapping a workspace manually
----
-# IDENTITY.md
+# IDENTITY.md - Ultra-minimal (no frontmatter)
+create_template "IDENTITY.md" '# IDENTITY.md
 
 - Name: ClawdBump
 - Vibe: Sharp, efficient, supportive
 - Emoji: 🚀
 
-FarBump engine interface. Uniswap v4 trading.'
+FarBump engine. Uniswap v4.'
 
-# USER.md - Ultra-minimal
-create_template "USER.md" '---
-summary: "User"
-read_when:
-  - Bootstrapping a workspace manually
----
-# USER.md
+# USER.md - Ultra-minimal (no frontmatter)
+create_template "USER.md" '# USER.md
 
 - Name: User
 - Timezone: UTC
@@ -231,35 +223,25 @@ create_template "AGENTS.md" '# AGENTS.md
 
 FarBump trading workspace. Read SOUL.md for identity.'
 
-# SOUL.md - Ultra-minimal for llama-3.1-8b-instant context window
-create_template "SOUL.md" '---
-summary: "ClawdBump - Ultra Minimal"
-read_when:
-  - Every session startup
----
-# SOUL.md
+# SOUL.md - Ultra-minimal (no frontmatter to save tokens)
+create_template "SOUL.md" '# SOUL.md
 
-ClawdBump AI Commander. FarBump engine interface. Uniswap v4 trading.
+ClawdBump AI Commander. FarBump engine. Uniswap v4.
 
-**CRITICAL**: Extremely concise. Short sentences only. Save tokens.
+CRITICAL: Extremely concise. Short sentences. Save tokens.
 
-**Bumping**: Gather 4 params → Target, Volume, Interval, Duration. Route to FarBump.
+Bumping: Target, Volume, Interval, Duration → Route to FarBump.
 
-**FORBIDDEN**: Notion, Google, sessions_spawn, web_search. Text only. FarBump API tools only.
+FORBIDDEN: Notion, Google, sessions_spawn, web_search. Text only.
 
-**Auth**: Not linked? → [FARBUMP_API_URL]/api/v1/auth/telegram/init
+Auth: Not linked? [FARBUMP_API_URL]/api/v1/auth/telegram/init
 
-**Tone**: Sharp, efficient, supportive.'
+Tone: Sharp, efficient, supportive.'
 
-# TOOLS.md - Ultra-minimal
-create_template "TOOLS.md" '---
-summary: "Config"
-read_when:
-  - Bootstrapping a workspace manually
----
-# TOOLS.md
+# TOOLS.md - Ultra-minimal (no frontmatter)
+create_template "TOOLS.md" '# TOOLS.md
 
-FarBump API: FARBUMP_API_URL. Auth: Telegram/Privy. Trading: Uniswap v4.'
+FarBump API: FARBUMP_API_URL. Auth: Telegram/Privy.'
 
 # HEARTBEAT.md
 create_template "HEARTBEAT.md" '---
@@ -272,17 +254,12 @@ read_when:
 # Keep this file empty (or with only comments) to skip heartbeat API calls.
 # Add tasks below when you want the agent to check something periodically.'
 
-# BOOTSTRAP.md - Ultra-minimal
-create_template "BOOTSTRAP.md" '---
-summary: "Init"
-read_when:
-  - Bootstrapping a workspace manually
----
-# BOOTSTRAP.md
+# BOOTSTRAP.md - Ultra-minimal (no frontmatter)
+create_template "BOOTSTRAP.md" '# BOOTSTRAP.md
 
-ClawdBump: FarBump engine interface. Uniswap v4 trading.
+ClawdBump: FarBump engine. Uniswap v4.
 
-Bumping: Target, Volume, Interval, Duration → Route to FarBump.
+Bumping: Target, Volume, Interval, Duration → FarBump.
 
 Tone: Sharp, efficient, concise.
 
