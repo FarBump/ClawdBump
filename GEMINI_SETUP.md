@@ -86,13 +86,14 @@ Clawdbot supports these Gemini models:
 
 ## Free Tier Limits
 
-### Gemini 2.0 Flash (Recommended)
+### Gemini 1.5 Flash (Recommended)
 
-- **Requests**: 1,500 per day
-- **Rate**: 10 requests per minute
+- **Requests**: Higher quota limits than Gemini 3 Flash
+- **Rate**: Better rate limits for production use
 - **Context**: 1M tokens
 - **Output**: 8k tokens max
 - **Cost**: **FREE!**
+- **Stability**: More stable and reliable for production
 
 ### What This Means for Your Bot:
 
