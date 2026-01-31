@@ -17,18 +17,25 @@
 
 ---
 
-### 2. Google Gemini API Key
-**Variable:** `GEMINI_API_KEY`  
-**Value:** Your Gemini API key (format: `AIzaSy...`)  
-**Source:** Get from [Google AI Studio](https://aistudio.google.com/app/apikey)
+### 2. Groq API Key
+**Variable:** `GROQ_API_KEY`  
+**Value:** Your Groq API key (format: `gsk_...`)  
+**Source:** Get from [Groq Console](https://console.groq.com/)
 
 **How to get:**
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy the API key (format: `AIzaSy...`)
+1. Go to [Groq Console](https://console.groq.com/)
+2. Sign up or log in with your account
+3. Navigate to **API Keys** section
+4. Click "Create API Key"
+5. Copy the API key (format: `gsk_...`)
 
-**Reference:** [Gemini API Quickstart](https://ai.google.dev/gemini-api/docs/quickstart)
+**Reference:** [Groq API Documentation](https://console.groq.com/docs)
+
+**Why Groq?**
+- Higher quota limits than Gemini
+- No quota issues (429 errors)
+- Fast inference with LPU technology
+- Stable for production use
 
 ---
 
@@ -59,7 +66,9 @@
 4. Click **+ New Variable**
 5. Add each variable:
    - `TELEGRAM_BOT_TOKEN` = `your-telegram-token`
-   - `GEMINI_API_KEY` = `your-gemini-api-key`
+   - `GROQ_API_KEY` = `your-groq-api-key`
+   - `FARBUMP_API_URL` = `https://farbump.vercel.app/` (optional, has default)
+   - `FARBUMP_API_KEY` = `your-farbump-api-key` (if using FarBump API)
 6. Click **Deploy** to apply changes
 
 ---
@@ -68,7 +77,7 @@
 
 After setting variables, check Railway logs:
 - Should see: `Telegram: configured`
-- Should see: `Google provider: configured`
+- Should see: `Groq provider: configured` (or model provider status)
 - No errors about missing tokens/keys
 
 ---
@@ -79,4 +88,5 @@ After setting variables, check Railway logs:
 - Use Railway environment variables only
 - Don't add to `clawdbot-config.json` in the repo
 - Use `.env.example` for documentation only
+
 

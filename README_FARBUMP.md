@@ -90,7 +90,7 @@ Bot: ✅ Swap Successful!
 - pnpm (or npm/yarn)
 - Telegram bot token
 - FarBump API credentials
-- Anthropic/OpenAI API key
+- Groq API key (recommended - higher quota limits, no quota issues)
 
 ### Local Development
 

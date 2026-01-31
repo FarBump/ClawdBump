@@ -71,12 +71,12 @@ Railway injects these automatically:
 
 ---
 
-## 🤖 **Gemini Provider Configuration (from Moltbot Docs):**
+## 🤖 **Groq Provider Configuration:**
 
 ### **Environment Variable Method (Recommended):**
 ```bash
 # In Railway Variables tab:
-GOOGLE_API_KEY=AIzaSy...your_key_here
+GROQ_API_KEY=gsk_...your_key_here
 ```
 
 ### **Config File Method (Alternative):**
@@ -84,8 +84,8 @@ GOOGLE_API_KEY=AIzaSy...your_key_here
 // clawdbot-config.json (if not using env vars)
 {
   "providers": {
-    "google": {
-      "apiKey": "AIzaSy...your_key_here"
+    "groq": {
+      "apiKey": "gsk_...your_key_here"
     }
   }
 }
@@ -95,16 +95,22 @@ GOOGLE_API_KEY=AIzaSy...your_key_here
 ```json
 {
   "agent": {
-    "model": "google/gemini-1.5-flash"
+    "model": "groq/llama-3.3-70b-versatile"
   }
 }
 ```
 
-**Available Gemini Models:**
-- `google/gemini-1.5-flash` - Recommended: Stable, higher quota limits, good for production
-- `google/gemini-1.5-pro` - More capable, slower
-- `google/gemini-3-flash-preview` - Experimental, newer (may have stricter quotas)
-- `google/gemini-3-pro-preview` - Experimental, more capable (may have stricter quotas)
+**Available Groq Models:**
+- `groq/llama-3.3-70b-versatile` - Recommended: High performance, fast, high quota limits
+- `groq/llama-3.1-70b-versatile` - More capable alternative
+- `groq/llama-3.1-8b-instant` - Faster, smaller model
+- `groq/mixtral-8x7b-32768` - Mixtral model option
+
+**Why Groq?**
+- Higher quota limits than Gemini (no 429 errors)
+- Ultra-fast inference with LPU technology
+- More stable for production deployments
+- Free tier available
 
 ---
 

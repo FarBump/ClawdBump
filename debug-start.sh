@@ -100,30 +100,30 @@ cfg.channels.telegram.enabled = true;
 cfg.channels.telegram.dmPolicy = cfg.channels.telegram.dmPolicy ?? "open";
 cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
 
-// Ensure a default model is present (Gemini). (Will fail if GEMINI_API_KEY missing.)
+// Ensure a default model is present (Groq). (Will fail if GROQ_API_KEY missing.)
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-// Use gemini-1.5-flash as default (stable, higher quota limits, better for production)
-// gemini-3-flash has stricter quotas and may hit 429 errors on free tier
+// Use Groq llama-3.3-70b-versatile as default (fast, high quota limits, no quota issues)
+// Groq provides better quota limits than Gemini and is more reliable for production
 const currentModel = typeof cfg.agents.defaults.model === "string" 
   ? cfg.agents.defaults.model 
   : cfg.agents.defaults.model?.primary;
-// Force update if model is invalid or using newer models with stricter quotas
-const validGeminiModels = ["google/gemini-1.5-flash", "google/gemini-1.5-pro", "google/gemini-3-pro-preview", "google/gemini-3-flash-preview", "google/gemini-3-pro", "google/gemini-3-flash"];
-const isValidModel = currentModel && validGeminiModels.includes(currentModel);
-// Use gemini-1.5-flash for better stability and higher quota limits
-const defaultModel = "google/gemini-1.5-flash";
-if (!isValidModel || currentModel === "google/gemini-2.0-flash-exp" || currentModel?.includes("gemini-3")) {
+// Force update to Groq if using Gemini or other providers
+const validGroqModels = ["groq/llama-3.3-70b-versatile", "groq/llama-3.1-70b-versatile", "groq/llama-3.1-8b-instant", "groq/mixtral-8x7b-32768"];
+const isValidGroqModel = currentModel && validGroqModels.includes(currentModel);
+// Use Groq llama-3.3-70b-versatile for better quota limits and reliability
+const defaultModel = "groq/llama-3.3-70b-versatile";
+if (!isValidGroqModel || currentModel?.includes("gemini") || currentModel?.includes("google")) {
   if (typeof cfg.agents.defaults.model === "string") {
     cfg.agents.defaults.model = defaultModel;
   } else {
     cfg.agents.defaults.model.primary = defaultModel;
   }
-  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (better stability and higher quota limits)`);
+  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (Groq - better quota limits and reliability)`);
 } else {
   if (typeof cfg.agents.defaults.model === "string") {
-    // Keep as is if already using valid model
+    // Keep as is if already using valid Groq model
   } else {
     cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? defaultModel;
   }
@@ -453,15 +453,15 @@ echo ""
 echo "=== Checking environment variables ==="
 echo "PORT: ${PORT:-not set}"
 echo "TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:+set (hidden)}"
-echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (hidden)}"
+echo "GROQ_API_KEY: ${GROQ_API_KEY:+set (hidden)}"
 echo "CLAWDBOT_GATEWAY_TOKEN: ${CLAWDBOT_GATEWAY_TOKEN:+set (hidden)}"
 echo "NODE_ENV: ${NODE_ENV:-not set}"
 echo "CLAWDBOT_STATE_DIR: ${CLAWDBOT_STATE_DIR:-not set}"
 echo "CLAWDBOT_WORKSPACE_DIR: ${CLAWDBOT_WORKSPACE_DIR:-not set}"
 echo "CLAWDBOT_CONFIG_PATH: ${CLAWDBOT_CONFIG_PATH:-not set} (effective: ${CONFIG_PATH})"
 
-if [ -z "${GEMINI_API_KEY:-}" ]; then
-  echo "⚠️  WARNING: GEMINI_API_KEY is NOT set. AI replies will fail. (Set Railway variable GEMINI_API_KEY)"
+if [ -z "${GROQ_API_KEY:-}" ]; then
+  echo "⚠️  WARNING: GROQ_API_KEY is NOT set. AI replies will fail. (Set Railway variable GROQ_API_KEY)"
 fi
 
 echo ""
