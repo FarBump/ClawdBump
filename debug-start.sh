@@ -169,7 +169,10 @@ for (const key in cfg.skills.entries) {
 }
 
 // Reduce context size for llama-3.1-8b-instant (smaller context window ~8k tokens)
-// Note: Context limits are handled by the agent runtime, but we minimize template sizes
+// Configure compaction to prevent context overflow
+cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
+// Reserve more tokens for system prompt and workspace files to prevent overflow
+cfg.agents.defaults.compaction.reserveTokensFloor = 4000; // Higher buffer for smaller context models
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
