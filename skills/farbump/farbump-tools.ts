@@ -47,13 +47,22 @@ function getFarBumpConfig(): FarBumpConfig {
 }
 
 /**
+ * Normalize URL by removing trailing slash to avoid double slashes
+ */
+function normalizeUrl(baseUrl: string, path: string): string {
+  const normalizedBase = baseUrl.replace(/\/$/, '');
+  return `${normalizedBase}${path.startsWith('/') ? path : '/' + path}`;
+}
+
+/**
  * Execute token swap via FarBump API
  */
 export async function executeSwap(params: SwapParams): Promise<SwapResponse> {
   const config = getFarBumpConfig();
   
   try {
-    const response = await fetch(`${config.apiUrl}/api/v1/swap`, {
+    const swapUrl = normalizeUrl(config.apiUrl, '/api/v1/swap');
+    const response = await fetch(swapUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -100,8 +109,9 @@ export async function getBalance(walletAddress: string): Promise<BalanceResponse
   const config = getFarBumpConfig();
   
   try {
+    const balanceUrl = normalizeUrl(config.apiUrl, '/api/v1/balance');
     const response = await fetch(
-      `${config.apiUrl}/api/v1/balance?wallet=${walletAddress}`,
+      `${balanceUrl}?wallet=${walletAddress}`,
       {
         headers: {
           'Authorization': `Bearer ${config.apiKey}`
@@ -146,7 +156,8 @@ export async function setupAutoSwap(params: {
   const config = getFarBumpConfig();
   
   try {
-    const response = await fetch(`${config.apiUrl}/api/v1/autoswap`, {
+    const autoswapUrl = normalizeUrl(config.apiUrl, '/api/v1/autoswap');
+    const response = await fetch(autoswapUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -205,8 +216,9 @@ export async function getTransactionHistory(
   const config = getFarBumpConfig();
   
   try {
+    const transactionsUrl = normalizeUrl(config.apiUrl, '/api/v1/transactions');
     const response = await fetch(
-      `${config.apiUrl}/api/v1/transactions?wallet=${walletAddress}&limit=${limit}`,
+      `${transactionsUrl}?wallet=${walletAddress}&limit=${limit}`,
       {
         headers: {
           'Authorization': `Bearer ${config.apiKey}`

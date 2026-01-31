@@ -47,6 +47,14 @@ function getAuthConfig(): PrivyAuthConfig {
 }
 
 /**
+ * Normalize URL by removing trailing slash to avoid double slashes
+ */
+function normalizeUrl(baseUrl: string, path: string): string {
+  const normalizedBase = baseUrl.replace(/\/$/, '');
+  return `${normalizedBase}${path.startsWith('/') ? path : '/' + path}`;
+}
+
+/**
  * Step 1: Initiate Privy authentication for Telegram user
  * 
  * This will:
@@ -59,7 +67,7 @@ export async function initiatePrivyAuth(telegramUser: TelegramUser): Promise<Aut
   
   try {
     // Build auth URL with query parameters
-    const baseUrl = `${config.farbumpApiUrl}/api/v1/auth/telegram/init`;
+    const endpoint = normalizeUrl(config.farbumpApiUrl, '/api/v1/auth/telegram/init');
     const params = new URLSearchParams({
       telegram_id: telegramUser.id.toString(),
       telegram_username: telegramUser.username || ''
@@ -73,7 +81,7 @@ export async function initiatePrivyAuth(telegramUser: TelegramUser): Promise<Aut
       params.append('telegram_last_name', telegramUser.last_name);
     }
     
-    const authUrl = `${baseUrl}?${params.toString()}`;
+    const authUrl = `${endpoint}?${params.toString()}`;
     
     return {
       success: true,
@@ -108,9 +116,9 @@ export async function checkAuthStatus(
   const config = getAuthConfig();
   
   try {
+    const statusUrl = normalizeUrl(config.farbumpApiUrl, '/api/v1/auth/telegram/status');
     const response = await fetch(
-      `${config.farbumpApiUrl}/api/v1/auth/telegram/status?` + 
-      `telegram_id=${telegramId}&session_id=${sessionId}`,
+      `${statusUrl}?telegram_id=${telegramId}&session_id=${sessionId}`,
       {
         headers: {
           'Authorization': `Bearer ${config.apiKey}`
@@ -163,8 +171,9 @@ export async function verifySession(
   const config = getAuthConfig();
   
   try {
+    const verifyUrl = normalizeUrl(config.farbumpApiUrl, '/api/v1/auth/telegram/verify');
     const response = await fetch(
-      `${config.farbumpApiUrl}/api/v1/auth/telegram/verify?telegram_id=${telegramId}`,
+      `${verifyUrl}?telegram_id=${telegramId}`,
       {
         headers: {
           'Authorization': `Bearer ${config.apiKey}`
@@ -206,7 +215,8 @@ export async function revokeAuth(
   const config = getAuthConfig();
   
   try {
-    const response = await fetch(`${config.farbumpApiUrl}/api/v1/auth/telegram/revoke`, {
+    const revokeUrl = normalizeUrl(config.farbumpApiUrl, '/api/v1/auth/telegram/revoke');
+    const response = await fetch(revokeUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
