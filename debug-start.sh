@@ -99,6 +99,8 @@ cfg.channels.telegram = cfg.channels.telegram ?? {};
 cfg.channels.telegram.enabled = true;
 cfg.channels.telegram.dmPolicy = cfg.channels.telegram.dmPolicy ?? "open";
 cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
+// Limit conversation history to last 10 messages to prevent context overflow
+cfg.channels.telegram.dmHistoryLimit = 10;
 
 // Ensure a default model is present (Groq). (Will fail if GROQ_API_KEY missing.)
 cfg.agents = cfg.agents ?? {};
@@ -150,8 +152,9 @@ for (const key in cfg.plugins.entries) {
     cfg.plugins.entries[key] = { ...(cfg.plugins.entries[key] ?? {}), enabled: false };
   }
 }
-// Avoid trying to load memory plugins on tiny Railway boxes.
-cfg.plugins.slots = { ...(cfg.plugins.slots ?? {}), memory: undefined };
+// Disable memory plugins explicitly to prevent "memory slot plugin not found" errors
+// Set to "none" instead of undefined to properly disable memory plugin
+cfg.plugins.slots = { ...(cfg.plugins.slots ?? {}), memory: "none" };
 
 // Disable workspace skill loading for Railway (Telegram + FarBump only, no workspace skills needed)
 cfg.skills = cfg.skills ?? {};
@@ -175,6 +178,11 @@ cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
 // Reserve more tokens for system prompt and workspace files to prevent overflow
 // For small context models, we need a larger buffer to prevent overflow
 cfg.agents.defaults.compaction.reserveTokensFloor = 5000; // Even higher buffer for very small context models
+
+// Limit output tokens to 1024 for Groq API to prevent context overflow
+// This ensures responses are concise and don't consume too many tokens
+cfg.agents.defaults.extraParams = cfg.agents.defaults.extraParams ?? {};
+cfg.agents.defaults.extraParams.maxTokens = 1024;
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
