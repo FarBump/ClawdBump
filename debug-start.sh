@@ -104,26 +104,28 @@ cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-// Use valid Gemini model: gemini-3-pro-preview (default) or gemini-3-flash-preview (faster)
-// Model catalog will discover available models; this is the fallback if catalog fails
+// Use gemini-3-flash-preview as default (lighter, faster, better free tier quota)
+// gemini-3-pro has stricter quotas and may hit 429 errors on free tier
 const currentModel = typeof cfg.agents.defaults.model === "string" 
   ? cfg.agents.defaults.model 
   : cfg.agents.defaults.model?.primary;
-// Force update if model is invalid (gemini-2.0-flash-exp is deprecated)
+// Force update if model is invalid or using pro model (which has stricter quotas)
 const validGeminiModels = ["google/gemini-3-pro-preview", "google/gemini-3-flash-preview", "google/gemini-3-pro", "google/gemini-3-flash"];
 const isValidModel = currentModel && validGeminiModels.includes(currentModel);
-if (!isValidModel || currentModel === "google/gemini-2.0-flash-exp") {
+// Prefer flash models for free tier (better quota)
+const defaultModel = "google/gemini-3-flash-preview";
+if (!isValidModel || currentModel === "google/gemini-2.0-flash-exp" || currentModel?.includes("gemini-3-pro")) {
   if (typeof cfg.agents.defaults.model === "string") {
-    cfg.agents.defaults.model = "google/gemini-3-pro-preview";
+    cfg.agents.defaults.model = defaultModel;
   } else {
-    cfg.agents.defaults.model.primary = "google/gemini-3-pro-preview";
+    cfg.agents.defaults.model.primary = defaultModel;
   }
-  console.log(`✅ Updated model from ${currentModel || "undefined"} to google/gemini-3-pro-preview`);
+  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (better free tier quota)`);
 } else {
   if (typeof cfg.agents.defaults.model === "string") {
-    // Keep as is
+    // Keep as is if already using flash
   } else {
-    cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? "google/gemini-3-pro-preview";
+    cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? defaultModel;
   }
 }
 
