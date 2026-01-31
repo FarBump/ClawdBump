@@ -40,7 +40,7 @@ interface AuthResponse {
  */
 function getAuthConfig(): PrivyAuthConfig {
   return {
-    farbumpApiUrl: process.env.FARBUMP_API_URL || 'https://api.farbump.vercel.app',
+    farbumpApiUrl: process.env.FARBUMP_API_URL || 'https://farbump.vercel.app/',
     farbumpApiKey: process.env.FARBUMP_API_KEY!,
     botUsername: process.env.TELEGRAM_BOT_USERNAME || 'farbump_bot'
   };
