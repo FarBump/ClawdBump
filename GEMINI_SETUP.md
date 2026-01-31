@@ -24,7 +24,7 @@ https://aistudio.google.com/apikey
 
 ```bash
 # Test API key
-curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=YOUR_API_KEY" \
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
     "contents": [{
@@ -62,25 +62,24 @@ Clawdbot supports these Gemini models:
 ### Recommended for Telegram Bot:
 
 ```json
-"model": "google/gemini-2.0-flash-exp"
+"model": "google/gemini-1.5-flash"
 ```
 
 **Best for:**
+- Stable and reliable
+- Higher quota limits (better for production)
 - Fast responses
-- High throughput
 - Free tier friendly
 
 ### Alternative Models:
 
 ```json
-// Faster, simpler tasks
-"model": "google/gemini-1.5-flash"
-
 // More capable, slower
 "model": "google/gemini-1.5-pro"
 
-// Experimental, most powerful
-"model": "google/gemini-2.0-exp"
+// Experimental, newer models (may have stricter quotas)
+"model": "google/gemini-3-flash-preview"
+"model": "google/gemini-3-pro-preview"
 ```
 
 ---
@@ -114,7 +113,7 @@ Clawdbot supports these Gemini models:
 ```json
 {
   "agent": {
-    "model": "google/gemini-2.0-flash-exp"
+    "model": "google/gemini-1.5-flash"
   }
 }
 ```
@@ -252,7 +251,7 @@ You hit the daily limit (1,500 requests).
 Check model name in `clawdbot-config.json`:
 
 ```json
-"model": "google/gemini-2.0-flash-exp"
+"model": "google/gemini-1.5-flash"
 ```
 
 Must be exactly this format!
@@ -312,7 +311,7 @@ https://aistudio.google.com/apikey
 GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy...
 
 # Config model:
-"model": "google/gemini-2.0-flash-exp"
+"model": "google/gemini-1.5-flash"
 
 # Deploy:
 railway up

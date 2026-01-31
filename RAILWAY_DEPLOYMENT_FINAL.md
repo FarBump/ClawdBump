@@ -95,15 +95,16 @@ GOOGLE_API_KEY=AIzaSy...your_key_here
 ```json
 {
   "agent": {
-    "model": "google/gemini-2.0-flash-exp"
+    "model": "google/gemini-1.5-flash"
   }
 }
 ```
 
 **Available Gemini Models:**
-- `google/gemini-2.0-flash-exp` - Fast, good for chat
-- `google/gemini-2.0-flash-thinking-exp` - With reasoning
-- `google/gemini-pro` - Production stable
+- `google/gemini-1.5-flash` - Recommended: Stable, higher quota limits, good for production
+- `google/gemini-1.5-pro` - More capable, slower
+- `google/gemini-3-flash-preview` - Experimental, newer (may have stricter quotas)
+- `google/gemini-3-pro-preview` - Experimental, more capable (may have stricter quotas)
 
 ---
 
@@ -310,4 +311,5 @@ This configuration is based on:
 **Success rate**: Very high (proven pattern)
 
 Follow Steps 1-6 above and your bot will be live! 🚀
+
 

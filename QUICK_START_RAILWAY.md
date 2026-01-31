@@ -125,7 +125,7 @@ Keuntungan:
 │  [Service: ClawdBot] ← NEW!         │
 │   - Port: 18789                     │
 │   - Repo: clawdbot-telegram         │
-│   - Model: Gemini 2.0 Flash         │
+│   - Model: Gemini 1.5 Flash         │
 │                                     │
 │  [Service: Redis] (Optional)        │
 │   - Shared storage                  │

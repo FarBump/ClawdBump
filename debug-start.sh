@@ -104,26 +104,26 @@ cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-// Use gemini-3-flash-preview as default (lighter, faster, better free tier quota)
-// gemini-3-pro has stricter quotas and may hit 429 errors on free tier
+// Use gemini-1.5-flash as default (stable, higher quota limits, better for production)
+// gemini-3-flash has stricter quotas and may hit 429 errors on free tier
 const currentModel = typeof cfg.agents.defaults.model === "string" 
   ? cfg.agents.defaults.model 
   : cfg.agents.defaults.model?.primary;
-// Force update if model is invalid or using pro model (which has stricter quotas)
-const validGeminiModels = ["google/gemini-3-pro-preview", "google/gemini-3-flash-preview", "google/gemini-3-pro", "google/gemini-3-flash"];
+// Force update if model is invalid or using newer models with stricter quotas
+const validGeminiModels = ["google/gemini-1.5-flash", "google/gemini-1.5-pro", "google/gemini-3-pro-preview", "google/gemini-3-flash-preview", "google/gemini-3-pro", "google/gemini-3-flash"];
 const isValidModel = currentModel && validGeminiModels.includes(currentModel);
-// Prefer flash models for free tier (better quota)
-const defaultModel = "google/gemini-3-flash-preview";
-if (!isValidModel || currentModel === "google/gemini-2.0-flash-exp" || currentModel?.includes("gemini-3-pro")) {
+// Use gemini-1.5-flash for better stability and higher quota limits
+const defaultModel = "google/gemini-1.5-flash";
+if (!isValidModel || currentModel === "google/gemini-2.0-flash-exp" || currentModel?.includes("gemini-3")) {
   if (typeof cfg.agents.defaults.model === "string") {
     cfg.agents.defaults.model = defaultModel;
   } else {
     cfg.agents.defaults.model.primary = defaultModel;
   }
-  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (better free tier quota)`);
+  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (better stability and higher quota limits)`);
 } else {
   if (typeof cfg.agents.defaults.model === "string") {
-    // Keep as is if already using flash
+    // Keep as is if already using valid model
   } else {
     cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? defaultModel;
   }

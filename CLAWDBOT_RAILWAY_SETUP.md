@@ -153,7 +153,7 @@ Railway akan gunakan `railway.json` yang sudah ada:
 ```json
 {
   "agent": {
-    "model": "google/gemini-2.0-flash-exp",
+    "model": "google/gemini-1.5-flash",
     "workspace": "~/.clawdbot/workspace"
   },
   "providers": {
