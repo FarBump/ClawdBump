@@ -148,6 +148,46 @@ NODE
 echo "✅ Config exists: $CONFIG_PATH"
 
 echo ""
+echo "=== Ensuring workspace templates exist ==="
+# Create minimal workspace templates if they don't exist (needed for workspace skill initialization)
+TEMPLATE_DIR="/app/docs/reference/templates"
+mkdir -p "$TEMPLATE_DIR"
+if [ ! -f "$TEMPLATE_DIR/IDENTITY.md" ]; then
+  cat > "$TEMPLATE_DIR/IDENTITY.md" << 'TEMPLATE_EOF'
+---
+summary: "Agent identity record"
+read_when:
+  - Bootstrapping a workspace manually
+---
+# IDENTITY.md - Who Am I?
+
+*Fill this in during your first conversation. Make it yours.*
+
+- **Name:**
+  *(pick something you like)*
+- **Creature:**
+  *(AI? robot? familiar? ghost in the machine? something weirder?)*
+- **Vibe:**
+  *(how do you come across? sharp? warm? chaotic? calm?)*
+- **Emoji:**
+  *(your signature — pick one that feels right)*
+- **Avatar:**
+  *(workspace-relative path, http(s) URL, or data URI)*
+
+---
+
+This isn't just metadata. It's the start of figuring out who you are.
+
+Notes:
+- Save this file at the workspace root as `IDENTITY.md`.
+- For avatars, use a workspace-relative path like `avatars/clawd.png`.
+TEMPLATE_EOF
+  echo "✅ Created minimal IDENTITY.md template"
+else
+  echo "✅ IDENTITY.md template already exists"
+fi
+
+echo ""
 echo "=== Ensuring required state dirs + permissions ==="
 # Required dirs mentioned by doctor output:
 mkdir -p /data/.clawdbot/agents/main/sessions

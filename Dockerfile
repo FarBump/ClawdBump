@@ -38,18 +38,19 @@ RUN npm uninstall -g pnpm
 # IMPORTANT: Keep ONLY Telegram extension (delete all other extensions to reduce size)
 # Keep docs/reference/templates/ for workspace skill initialization (minimal footprint)
 RUN mkdir -p /tmp/docs-ref-templates \
-    && cp -r docs/reference/templates/* /tmp/docs-ref-templates/ 2>/dev/null || true \
+    && (test -d docs/reference/templates && cp -r docs/reference/templates/* /tmp/docs-ref-templates/ || true) \
     && mkdir -p /tmp/ext-telegram \
-    && cp -r extensions/telegram /tmp/ext-telegram/ 2>/dev/null || true \
+    && (test -d extensions/telegram && cp -r extensions/telegram /tmp/ext-telegram/ || true) \
     && mkdir -p /tmp/skill-farbump \
-    && cp -r skills/farbump /tmp/skill-farbump/ 2>/dev/null || true \
+    && (test -d skills/farbump && cp -r skills/farbump /tmp/skill-farbump/ || true) \
     && rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/ extensions/ skills/ \
     && mkdir -p docs/reference/templates extensions/telegram skills/farbump \
-    && cp -r /tmp/docs-ref-templates/* docs/reference/templates/ 2>/dev/null || true \
-    && cp -r /tmp/ext-telegram/telegram/* extensions/telegram/ 2>/dev/null || true \
-    && cp -r /tmp/skill-farbump/farbump/* skills/farbump/ 2>/dev/null || true \
+    && (test -d /tmp/docs-ref-templates && cp -r /tmp/docs-ref-templates/* docs/reference/templates/ || true) \
+    && (test -d /tmp/ext-telegram/telegram && cp -r /tmp/ext-telegram/telegram/* extensions/telegram/ || true) \
+    && (test -d /tmp/skill-farbump/farbump && cp -r /tmp/skill-farbump/farbump/* skills/farbump/ || true) \
     && rm -rf /tmp/docs-ref-templates /tmp/ext-telegram /tmp/skill-farbump \
-    && rm -f pnpm-lock.yaml pnpm-workspace.yaml
+    && rm -f pnpm-lock.yaml pnpm-workspace.yaml \
+    && echo "✅ Cleanup complete: kept telegram extension, farbump skill, and templates"
 
 # Remove packageManager field from package.json to prevent corepack from trying to use pnpm
 RUN node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json')); delete pkg.packageManager; delete pkg.pnpm; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
