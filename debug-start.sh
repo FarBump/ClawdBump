@@ -9,15 +9,20 @@ echo "Node version: $(node --version)"
 echo "NPM version: $(npm --version)"
 
 echo ""
-echo "=== Railway low-memory mode defaults ==="
+echo "=== Railway minimal mode: Telegram + FarBump only ==="
+# Disable all non-essential features for Railway (Telegram + FarBump only)
 # These sidecars are not needed for a simple Telegram bot and can consume memory.
 export CLAWDBOT_SKIP_BROWSER_CONTROL_SERVER="${CLAWDBOT_SKIP_BROWSER_CONTROL_SERVER:-1}"
 export CLAWDBOT_SKIP_CANVAS_HOST="${CLAWDBOT_SKIP_CANVAS_HOST:-1}"
 export CLAWDBOT_SKIP_GMAIL_WATCHER="${CLAWDBOT_SKIP_GMAIL_WATCHER:-1}"
 export CLAWDBOT_SKIP_CRON="${CLAWDBOT_SKIP_CRON:-1}"
+# We need Telegram channel, so don't skip all channels
+export CLAWDBOT_SKIP_CHANNELS="${CLAWDBOT_SKIP_CHANNELS:-0}"
 echo "CLAWDBOT_SKIP_BROWSER_CONTROL_SERVER=$CLAWDBOT_SKIP_BROWSER_CONTROL_SERVER"
 echo "CLAWDBOT_SKIP_CANVAS_HOST=$CLAWDBOT_SKIP_CANVAS_HOST"
 echo "CLAWDBOT_SKIP_GMAIL_WATCHER=$CLAWDBOT_SKIP_GMAIL_WATCHER"
+echo "CLAWDBOT_SKIP_CRON=$CLAWDBOT_SKIP_CRON"
+echo "CLAWDBOT_SKIP_CHANNELS=$CLAWDBOT_SKIP_CHANNELS"
 echo "CLAWDBOT_SKIP_CRON=$CLAWDBOT_SKIP_CRON"
 
 # Give V8 a bigger heap *if* the container has memory for it.
@@ -103,13 +108,19 @@ cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? "google
 
 // Disable plugin services by default on Railway to save memory.
 cfg.plugins = cfg.plugins ?? {};
-// We MUST enable the bundled Telegram channel plugin (it lives under ./extensions/telegram).
-// Keep plugin loading tight to save memory.
+// We MUST enable ONLY the Telegram channel plugin (it lives under ./extensions/telegram).
+// All other extensions are excluded from Docker image to reduce size.
 cfg.plugins.enabled = true;
-cfg.plugins.allow = ["telegram"];
-cfg.plugins.deny = [];
+cfg.plugins.allow = ["telegram"];  // ONLY Telegram, all others excluded
+cfg.plugins.deny = [];  // Explicit deny list not needed since we only copy telegram extension
 cfg.plugins.entries = cfg.plugins.entries ?? {};
 cfg.plugins.entries.telegram = { ...(cfg.plugins.entries.telegram ?? {}), enabled: true };
+// Disable all other plugin entries explicitly
+for (const key in cfg.plugins.entries) {
+  if (key !== "telegram") {
+    cfg.plugins.entries[key] = { ...(cfg.plugins.entries[key] ?? {}), enabled: false };
+  }
+}
 // Avoid trying to load memory plugins on tiny Railway boxes.
 cfg.plugins.slots = { ...(cfg.plugins.slots ?? {}), memory: undefined };
 
@@ -118,8 +129,16 @@ cfg.skills = cfg.skills ?? {};
 cfg.skills.load = cfg.skills.load ?? {};
 cfg.skills.load.watch = false;
 cfg.skills.load.extraDirs = [];
-// Disable workspace skills entirely to reduce memory and avoid template dependency
-cfg.skills.allowBundled = cfg.skills.allowBundled ?? [];
+// Disable ALL bundled skills (we only need FarBump skill which is in workspace)
+cfg.skills.allowBundled = [];
+// Disable all skills except FarBump (FarBump skill is loaded from workspace, not bundled)
+cfg.skills.entries = cfg.skills.entries ?? {};
+// Explicitly disable all other skills if they exist
+for (const key in cfg.skills.entries) {
+  if (key !== "farbump") {
+    cfg.skills.entries[key] = { ...(cfg.skills.entries[key] ?? {}), enabled: false };
+  }
+}
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");

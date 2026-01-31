@@ -35,14 +35,20 @@ RUN pnpm build
 RUN npm uninstall -g pnpm
 
 # Clean up source files (keep node_modules - don't prune to avoid pnpm errors)
-# IMPORTANT: do NOT delete `extensions/` — bundled channel plugins (e.g. Telegram) live there.
+# IMPORTANT: Keep ONLY Telegram extension (delete all other extensions to reduce size)
 # Keep docs/reference/templates/ for workspace skill initialization (minimal footprint)
 RUN mkdir -p /tmp/docs-ref-templates \
     && cp -r docs/reference/templates/* /tmp/docs-ref-templates/ 2>/dev/null || true \
-    && rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/ \
-    && mkdir -p docs/reference/templates \
+    && mkdir -p /tmp/ext-telegram \
+    && cp -r extensions/telegram /tmp/ext-telegram/ 2>/dev/null || true \
+    && mkdir -p /tmp/skill-farbump \
+    && cp -r skills/farbump /tmp/skill-farbump/ 2>/dev/null || true \
+    && rm -rf src/ test/ scripts/ apps/ ui/ docs/ .git/ extensions/ skills/ \
+    && mkdir -p docs/reference/templates extensions/telegram skills/farbump \
     && cp -r /tmp/docs-ref-templates/* docs/reference/templates/ 2>/dev/null || true \
-    && rm -rf /tmp/docs-ref-templates \
+    && cp -r /tmp/ext-telegram/telegram/* extensions/telegram/ 2>/dev/null || true \
+    && cp -r /tmp/skill-farbump/farbump/* skills/farbump/ 2>/dev/null || true \
+    && rm -rf /tmp/docs-ref-templates /tmp/ext-telegram /tmp/skill-farbump \
     && rm -f pnpm-lock.yaml pnpm-workspace.yaml
 
 # Remove packageManager field from package.json to prevent corepack from trying to use pnpm
