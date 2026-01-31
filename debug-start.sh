@@ -181,8 +181,12 @@ cfg.agents.defaults.compaction.reserveTokensFloor = 5000; // Even higher buffer 
 
 // Limit output tokens to 1024 for Groq API to prevent context overflow
 // This ensures responses are concise and don't consume too many tokens
-cfg.agents.defaults.extraParams = cfg.agents.defaults.extraParams ?? {};
-cfg.agents.defaults.extraParams.maxTokens = 1024;
+// Set maxTokens per-model in models config (extraParams reads from models[modelKey].params)
+cfg.agents.defaults.models = cfg.agents.defaults.models ?? {};
+const modelKey = defaultModel; // e.g., "groq/llama-3.1-8b-instant"
+cfg.agents.defaults.models[modelKey] = cfg.agents.defaults.models[modelKey] ?? {};
+cfg.agents.defaults.models[modelKey].params = cfg.agents.defaults.models[modelKey].params ?? {};
+cfg.agents.defaults.models[modelKey].params.maxTokens = 1024;
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
