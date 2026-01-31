@@ -226,13 +226,8 @@ read_when:
 - Timezone: UTC
 - Notes: FarBump user'
 
-# AGENTS.md - Ultra-minimal
-create_template "AGENTS.md" '---
-summary: "Workspace"
-read_when:
-  - Bootstrapping a workspace manually
----
-# AGENTS.md
+# AGENTS.md - Ultra-minimal (must be < 2000 chars for bootstrapMaxChars limit)
+create_template "AGENTS.md" '# AGENTS.md
 
 FarBump trading workspace. Read SOUL.md for identity.'
 
