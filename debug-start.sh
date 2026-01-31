@@ -104,7 +104,9 @@ cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? "google/gemini-2.0-flash-exp";
+// Use valid Gemini model: gemini-3-pro-preview (default) or gemini-3-flash-preview (faster)
+// Model catalog will discover available models; this is the fallback if catalog fails
+cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? "google/gemini-3-pro-preview";
 
 // Disable plugin services by default on Railway to save memory.
 cfg.plugins = cfg.plugins ?? {};
