@@ -99,8 +99,8 @@ cfg.channels.telegram = cfg.channels.telegram ?? {};
 cfg.channels.telegram.enabled = true;
 cfg.channels.telegram.dmPolicy = cfg.channels.telegram.dmPolicy ?? "open";
 cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
-// Limit conversation history to last 10 messages to prevent context overflow
-cfg.channels.telegram.dmHistoryLimit = 10;
+// Limit conversation history to last 5 messages to prevent context overflow
+cfg.channels.telegram.dmHistoryLimit = 5;
 
 // Ensure a default model is present (Groq). (Will fail if GROQ_API_KEY missing.)
 cfg.agents = cfg.agents ?? {};
@@ -179,14 +179,21 @@ cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
 // For small context models, we need a larger buffer to prevent overflow
 cfg.agents.defaults.compaction.reserveTokensFloor = 5000; // Even higher buffer for very small context models
 
-// Limit output tokens to 1024 for Groq API to prevent context overflow
-// This ensures responses are concise and don't consume too many tokens
-// Set maxTokens per-model in models config (extraParams reads from models[modelKey].params)
+// Disable all tools to prevent tool call validation loops and context overflow
+// Force pure text responses only - no tool calls allowed
+cfg.agents.defaults.tools = cfg.agents.defaults.tools ?? {};
+cfg.agents.defaults.tools.allow = [];
+cfg.agents.defaults.tools.deny = ["*"]; // Deny all tools globally
+
+// Limit output tokens to 400 and set temperature to 0.1 for Groq API
+// This ensures responses are direct, concise, and don't consume too many tokens
+// Set maxTokens and temperature per-model in models config (extraParams reads from models[modelKey].params)
 cfg.agents.defaults.models = cfg.agents.defaults.models ?? {};
 const modelKey = defaultModel; // e.g., "groq/llama-3.1-8b-instant"
 cfg.agents.defaults.models[modelKey] = cfg.agents.defaults.models[modelKey] ?? {};
 cfg.agents.defaults.models[modelKey].params = cfg.agents.defaults.models[modelKey].params ?? {};
-cfg.agents.defaults.models[modelKey].params.maxTokens = 1024;
+cfg.agents.defaults.models[modelKey].params.maxTokens = 400;
+cfg.agents.defaults.models[modelKey].params.temperature = 0.1;
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
@@ -203,14 +210,22 @@ WORKSPACE_DIR="${CLAWDBOT_WORKSPACE_DIR:-/data/workspace}"
 mkdir -p "$TEMPLATE_DIR"
 mkdir -p "$WORKSPACE_DIR"
 
+# Get FARBUMP_WEB_URL from environment (fallback to FARBUMP_API_URL or default)
+FARBUMP_WEB_URL="${FARBUMP_WEB_URL:-${FARBUMP_API_URL:-https://farbump.vercel.app}}"
+# Remove trailing slash
+FARBUMP_WEB_URL="${FARBUMP_WEB_URL%/}"
+
 # Function to create/overwrite template AND workspace file (always use minimal version for context limits)
+# Replaces [FARBUMP_WEB_URL] placeholder with actual URL from environment
 create_template() {
   local filename="$1"
   local content="$2"
+  # Replace [FARBUMP_WEB_URL] placeholder with actual URL
+  local processed_content="${content//\[FARBUMP_WEB_URL\]/$FARBUMP_WEB_URL}"
   # Create in template directory (for new workspaces)
-  echo "$content" > "$TEMPLATE_DIR/$filename"
+  echo "$processed_content" > "$TEMPLATE_DIR/$filename"
   # Also create/overwrite in workspace directory (for existing workspaces with large files)
-  echo "$content" > "$WORKSPACE_DIR/$filename"
+  echo "$processed_content" > "$WORKSPACE_DIR/$filename"
   echo "✅ Created/overwritten $filename (template + workspace) - minimal for context limits"
 }
 
@@ -235,18 +250,20 @@ create_template "AGENTS.md" '# AGENTS.md
 
 FarBump trading workspace. Read SOUL.md for identity.'
 
-# SOUL.md - Ultra-minimal (no frontmatter to save tokens)
+# SOUL.md - Ultra-minimal with fail-fast logic (no frontmatter to save tokens)
 create_template "SOUL.md" '# SOUL.md
 
 ClawdBump AI Commander. FarBump engine. Uniswap v4.
 
 CRITICAL: Extremely concise. Short sentences. Save tokens.
 
+FAIL-FAST: If user'\''s FarBump data/account link not detected, DO NOT search/guess/use tools. Immediately respond: "I couldn'\''t detect your FarBump account. Please link it here: [FARBUMP_WEB_URL]/api/v1/auth/telegram/init"
+
 Bumping: Target, Volume, Interval, Duration → Route to FarBump.
 
-FORBIDDEN: Notion, Google, sessions_spawn, web_search. Text only.
+FORBIDDEN: Notion, Google, sessions_spawn, web_search, any external tools. Text only. NO tool calls.
 
-Auth: Not linked? [FARBUMP_API_URL]/api/v1/auth/telegram/init
+Auth: Not linked? [FARBUMP_WEB_URL]/api/v1/auth/telegram/init
 
 Tone: Sharp, efficient, supportive.'
 
@@ -275,7 +292,7 @@ Bumping: Target, Volume, Interval, Duration → FarBump.
 
 Tone: Sharp, efficient, concise.
 
-Auth: [FARBUMP_API_URL]/api/v1/auth/telegram/init
+Auth: [FARBUMP_WEB_URL]/api/v1/auth/telegram/init
 
 Tools: FORBIDDEN - Notion, Google, sessions_spawn, web_search.
 
