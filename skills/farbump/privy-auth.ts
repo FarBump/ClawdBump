@@ -40,7 +40,7 @@ interface AuthResponse {
  */
 function getAuthConfig(): PrivyAuthConfig {
   return {
-    farbumpApiUrl: process.env.FARBUMP_API_URL || 'https://api.farbump.com',
+    farbumpApiUrl: process.env.FARBUMP_API_URL || 'https://api.farbump.vercel.app',
     farbumpApiKey: process.env.FARBUMP_API_KEY!,
     botUsername: process.env.TELEGRAM_BOT_USERNAME || 'farbump_bot'
   };
@@ -50,48 +50,41 @@ function getAuthConfig(): PrivyAuthConfig {
  * Step 1: Initiate Privy authentication for Telegram user
  * 
  * This will:
- * 1. Send Telegram user data to FarBump backend
- * 2. Backend generates Privy auth session
- * 3. Returns auth URL for user to complete authentication
+ * 1. Build auth URL with telegram_id and telegram_username as query parameters
+ * 2. Return the URL directly (no API call needed - backend handles auth via URL)
+ * 3. User clicks button and completes auth in browser
  */
 export async function initiatePrivyAuth(telegramUser: TelegramUser): Promise<AuthResponse> {
   const config = getAuthConfig();
   
   try {
-    const response = await fetch(`${config.farbumpApiUrl}/api/v1/auth/telegram/init`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`
-      },
-      body: JSON.stringify({
-        telegram_id: telegramUser.id,
-        telegram_username: telegramUser.username,
-        telegram_first_name: telegramUser.first_name,
-        telegram_last_name: telegramUser.last_name
-      })
+    // Build auth URL with query parameters
+    const baseUrl = `${config.farbumpApiUrl}/api/v1/auth/telegram/init`;
+    const params = new URLSearchParams({
+      telegram_id: telegramUser.id.toString(),
+      telegram_username: telegramUser.username || ''
     });
     
-    if (!response.ok) {
-      const error = await response.json();
-      return {
-        success: false,
-        error: error.message || 'Failed to initiate authentication'
-      };
+    // Add optional parameters if available
+    if (telegramUser.first_name) {
+      params.append('telegram_first_name', telegramUser.first_name);
+    }
+    if (telegramUser.last_name) {
+      params.append('telegram_last_name', telegramUser.last_name);
     }
     
-    const data = await response.json();
+    const authUrl = `${baseUrl}?${params.toString()}`;
     
     return {
       success: true,
-      authUrl: data.auth_url,
-      sessionId: data.session_id
+      authUrl: authUrl,
+      sessionId: undefined // Session ID will be handled by backend via URL
     };
     
   } catch (error) {
     return {
       success: false,
-      error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      error: `Failed to generate auth URL: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
   }
 }
@@ -255,7 +248,7 @@ export function generateAuthMessage(authUrl: string): {
 
 Welcome to FarBump! To get started, you need to authenticate your account.
 
-When you click "Login with Privy" below:
+When you click "Login to FarBump" below:
 1. You'll be taken to our secure authentication page
 2. Complete the Privy authentication process
 3. A smart account will be automatically created for you
@@ -267,7 +260,7 @@ Your smart account will be created automatically and linked to your Telegram acc
     inline_keyboard: [
       [
         {
-          text: '🔑 Login with Privy',
+          text: '🔑 Login to FarBump',
           url: authUrl
         }
       ],

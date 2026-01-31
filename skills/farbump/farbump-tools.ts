@@ -36,7 +36,7 @@ interface BalanceResponse {
  * Get FarBump configuration from environment
  */
 function getFarBumpConfig(): FarBumpConfig {
-  const apiUrl = process.env.FARBUMP_API_URL || 'https://api.farbump.com';
+  const apiUrl = process.env.FARBUMP_API_URL || 'https://api.farbump.vercel.app';
   const apiKey = process.env.FARBUMP_API_KEY;
   
   if (!apiKey) {
