@@ -185,18 +185,19 @@ echo ""
 echo "=== Ensuring workspace templates exist ==="
 # Create all required workspace templates if they don't exist (needed for workspace skill initialization)
 TEMPLATE_DIR="/app/docs/reference/templates"
+WORKSPACE_DIR="${CLAWDBOT_WORKSPACE_DIR:-/data/workspace}"
 mkdir -p "$TEMPLATE_DIR"
+mkdir -p "$WORKSPACE_DIR"
 
-# Function to create template if missing
+# Function to create/overwrite template AND workspace file (always use minimal version for context limits)
 create_template() {
   local filename="$1"
   local content="$2"
-  if [ ! -f "$TEMPLATE_DIR/$filename" ]; then
-    echo "$content" > "$TEMPLATE_DIR/$filename"
-    echo "✅ Created $filename template"
-  else
-    echo "✅ $filename template already exists"
-  fi
+  # Create in template directory (for new workspaces)
+  echo "$content" > "$TEMPLATE_DIR/$filename"
+  # Also create/overwrite in workspace directory (for existing workspaces with large files)
+  echo "$content" > "$WORKSPACE_DIR/$filename"
+  echo "✅ Created/overwritten $filename (template + workspace) - minimal for context limits"
 }
 
 # IDENTITY.md - Ultra-minimal
