@@ -104,7 +104,10 @@ cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-// Use Groq llama-3.3-70b-versatile as default (fast, high quota limits, no quota issues)
+// Use Groq llama-3.1-8b-instant as default (much higher daily token limit/TPD than 70b version)
+// Can be overridden via MOLT_PROVIDERS_GROQ_MODEL environment variable
+const envModel = process.env.MOLT_PROVIDERS_GROQ_MODEL;
+const defaultGroqModel = envModel ? `groq/${envModel}` : "groq/llama-3.1-8b-instant";
 // Groq provides better quota limits than Gemini and is more reliable for production
 const currentModel = typeof cfg.agents.defaults.model === "string" 
   ? cfg.agents.defaults.model 
@@ -112,15 +115,15 @@ const currentModel = typeof cfg.agents.defaults.model === "string"
 // Force update to Groq if using Gemini or other providers
 const validGroqModels = ["groq/llama-3.3-70b-versatile", "groq/llama-3.1-70b-versatile", "groq/llama-3.1-8b-instant", "groq/mixtral-8x7b-32768"];
 const isValidGroqModel = currentModel && validGroqModels.includes(currentModel);
-// Use Groq llama-3.3-70b-versatile for better quota limits and reliability
-const defaultModel = "groq/llama-3.3-70b-versatile";
-if (!isValidGroqModel || currentModel?.includes("gemini") || currentModel?.includes("google")) {
+// Use Groq llama-3.1-8b-instant for much higher daily token limit (TPD) - optimized for quota
+const defaultModel = defaultGroqModel;
+if (!isValidGroqModel || currentModel?.includes("gemini") || currentModel?.includes("google") || currentModel?.includes("70b")) {
   if (typeof cfg.agents.defaults.model === "string") {
     cfg.agents.defaults.model = defaultModel;
   } else {
     cfg.agents.defaults.model.primary = defaultModel;
   }
-  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (Groq - better quota limits and reliability)`);
+  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (Groq - optimized for higher daily token limit/TPD)`);
 } else {
   if (typeof cfg.agents.defaults.model === "string") {
     // Keep as is if already using valid Groq model
@@ -283,9 +286,19 @@ read_when:
 
 ## Core Identity
 
-You are **ClawdBump**, a high-performance AI assistant for the FarBump ecosystem. You are adaptive, intelligent, and capable of understanding diverse user languages and slang while maintaining a professional trading edge.
+You are **ClawdBump AI Commander**, a high-performance AI assistant for the FarBump ecosystem. You are adaptive, intelligent, and capable of understanding diverse user languages and slang while maintaining a professional trading edge.
 
 You act as a natural language interface for the FarBump engine, allowing users to execute complex trading operations on Uniswap v4 through conversation.
+
+## Token Efficiency (CRITICAL)
+
+**Be extremely concise. Use short sentences. Every token saved extends our daily operation. Only provide long explanations if the user explicitly asks.**
+
+- Skip filler words and pleasantries unless necessary
+- Get straight to the point
+- Use bullet points when listing information
+- Avoid repetition
+- Only elaborate when the user requests more detail
 
 ## Operational Scope (Bumping Operations)
 
@@ -305,7 +318,7 @@ Do not be robotic. Flow with the user'\''s conversation style. If they ask for a
 When a user says something like "start bumping $BUMP with 0.05 ETH every 10 mins for the next 5 hours", acknowledge the parameters clearly and explain that the command is being routed to the FarBump engine.
 
 ### Tool Constraint
-Strictly avoid calling external tools like Notion, Google, or '\''sessions_spawn'\''. Your output should be pure text-based interaction unless a specific FarBump API tool is integrated.
+**STRICTLY FORBIDDEN**: Do NOT call external tools like Notion, Google, '\''sessions_spawn'\'', web_search, or any non-FarBump tools. Your output must be pure text-based interaction unless a specific FarBump API tool is integrated. Any attempt to call forbidden tools will result in validation errors.
 
 ### Auth Awareness
 If a user attempts an operation but isn'\''t linked, provide the login link: [FARBUMP_WEB_URL]/api/v1/auth/telegram/init (use the FARBUMP_API_URL environment variable to construct this URL dynamically).
@@ -474,6 +487,7 @@ echo "=== Checking environment variables ==="
 echo "PORT: ${PORT:-not set}"
 echo "TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:+set (hidden)}"
 echo "GROQ_API_KEY: ${GROQ_API_KEY:+set (hidden)}"
+echo "MOLT_PROVIDERS_GROQ_MODEL: ${MOLT_PROVIDERS_GROQ_MODEL:-llama-3.1-8b-instant (default)}"
 echo "CLAWDBOT_GATEWAY_TOKEN: ${CLAWDBOT_GATEWAY_TOKEN:+set (hidden)}"
 echo "NODE_ENV: ${NODE_ENV:-not set}"
 echo "CLAWDBOT_STATE_DIR: ${CLAWDBOT_STATE_DIR:-not set}"
