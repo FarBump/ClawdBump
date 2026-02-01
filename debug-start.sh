@@ -247,7 +247,6 @@ create_template "AGENTS.md" '# AGENTS.md
 
 FarBump trading workspace. Read SOUL.md for identity.'
 
-# SOUL.md - Ultra-minimal with fail-fast logic (no frontmatter to save tokens)
 MINI_APP_LINK_VALUE="${MINI_APP_LINK:-${FARBUMP_WEB_URL:-https://farbump.vercel.app}}"
 create_template "SOUL.md" '# SOUL.md
 
@@ -260,8 +259,6 @@ WALLET_ADDRESS: The wallet_address from the API (${FARBUMP_API_URL}/api/v1/auth/
 FAIL-FAST: If user'\''s wallet is not linked (is_valid: false from API), respond: "Oops! It looks like your wallet isn'\''t linked yet. 🤖\n\nPlease open the FarBump Mini App to activate your Privy Smart Account and start bumping: '"'"${MINI_APP_LINK_VALUE}"'"'"
 
 Bumping: Target, Volume, Interval, Duration → Route to FarBump API using wallet_address.
-
-FORBIDDEN: Notion, Google, sessions_spawn, web_search, any external tools. Text only. NO tool calls.
 
 Auth: Check user registration via ${FARBUMP_API_URL}/api/v1/auth/telegram/verify?telegram_id={telegram_id}. Use wallet_address from response.
 
