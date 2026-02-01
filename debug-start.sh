@@ -109,18 +109,18 @@ cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
 // Reduce bootstrap context size to prevent context overflow (llama-3.3-70b-versatile has smaller context window ~8k tokens)
 // Very aggressive limit for small context models
 cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 1000;
-// Use Gemini 1.5 Flash as default (most economical model with good quota limits)
+// Use Gemini 2.5 Flash Lite as default (most economical model)
 // Can be overridden via MOLT_PROVIDERS_GEMINI_MODEL environment variable
 const envModel = process.env.MOLT_PROVIDERS_GEMINI_MODEL;
-const defaultGeminiModel = envModel ? `google/${envModel}` : "google/gemini-1.5-flash";
-// Gemini 1.5 Flash is the most economical model with good free tier quota
+const defaultGeminiModel = envModel ? `google/${envModel}` : "google/gemini-2.5-flash-lite";
+// Gemini 2.5 Flash Lite is the most economical model
 const currentModel = typeof cfg.agents.defaults.model === "string" 
   ? cfg.agents.defaults.model 
   : cfg.agents.defaults.model?.primary;
 // Force update to Gemini if using Groq or other providers
-const validGeminiModels = ["google/gemini-1.5-flash", "google/gemini-1.5-pro", "google/gemini-3-flash-preview", "google/gemini-3-pro-preview"];
+const validGeminiModels = ["google/gemini-2.5-flash-lite", "google/gemini-1.5-pro", "google/gemini-1.5-flash", "google/gemini-3-flash-preview", "google/gemini-3-pro-preview"];
 const isValidGeminiModel = currentModel && validGeminiModels.includes(currentModel);
-// Use Gemini 1.5 Flash for most economical usage - optimized for quota
+// Use Gemini 2.5 Flash Lite for most economical usage
 const defaultModel = defaultGeminiModel;
 if (!isValidGeminiModel || currentModel?.includes("groq") || currentModel?.includes("llama")) {
   if (typeof cfg.agents.defaults.model === "string") {
@@ -185,7 +185,7 @@ cfg.agents.defaults.compaction.reserveTokensFloor = 2000; // Even higher buffer 
 // This ensures responses are direct, concise, and don't consume too many tokens
 // Set maxTokens and temperature per-model in models config (extraParams reads from models[modelKey].params)
 cfg.agents.defaults.models = cfg.agents.defaults.models ?? {};
-const modelKey = defaultModel; // e.g., "google/gemini-1.5-flash"
+const modelKey = defaultModel; // e.g., "google/gemini-2.5-flash-lite"
 cfg.agents.defaults.models[modelKey] = cfg.agents.defaults.models[modelKey] ?? {};
 cfg.agents.defaults.models[modelKey].params = cfg.agents.defaults.models[modelKey].params ?? {};
 cfg.agents.defaults.models[modelKey].params.maxTokens = 400;
@@ -322,7 +322,7 @@ echo "=== Checking environment variables ==="
 echo "PORT: ${PORT:-not set}"
 echo "TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:+set (hidden)}"
 echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (hidden)}"
-echo "MOLT_PROVIDERS_GEMINI_MODEL: ${MOLT_PROVIDERS_GEMINI_MODEL:-gemini-1.5-flash (default)}"
+echo "MOLT_PROVIDERS_GEMINI_MODEL: ${MOLT_PROVIDERS_GEMINI_MODEL:-gemini-2.5-flash-lite (default)}"
 FARBUMP_WEB_URL_VALUE="${FARBUMP_WEB_URL:-${FARBUMP_API_URL:-https://farbump.vercel.app}}"
 echo "FARBUMP_WEB_URL: ${FARBUMP_WEB_URL_VALUE}"
 echo "CLAWDBOT_GATEWAY_TOKEN: ${CLAWDBOT_GATEWAY_TOKEN:+set (hidden)}"
