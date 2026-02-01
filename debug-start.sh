@@ -106,21 +106,21 @@ cfg.channels.telegram.dmHistoryLimit = 5;
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-// Reduce bootstrap context size to prevent context overflow (llama-3.1-8b-instant has smaller context window ~8k tokens)
+// Reduce bootstrap context size to prevent context overflow (llama-3.3-70b-versatile has smaller context window ~8k tokens)
 // Very aggressive limit for small context models
 cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 1000;
-// Use Groq llama-3.1-8b-instant as default (much higher daily token limit/TPD than 70b version)
+// Use Groq llama-3.3-70b-versatile as default (much higher daily token limit/TPD than 70b version)
 // Can be overridden via MOLT_PROVIDERS_GROQ_MODEL environment variable
 const envModel = process.env.MOLT_PROVIDERS_GROQ_MODEL;
-const defaultGroqModel = envModel ? `groq/${envModel}` : "groq/llama-3.1-8b-instant";
+const defaultGroqModel = envModel ? `groq/${envModel}` : "groq/llama-3.3-70b-versatile";
 // Groq provides better quota limits than Gemini and is more reliable for production
 const currentModel = typeof cfg.agents.defaults.model === "string" 
   ? cfg.agents.defaults.model 
   : cfg.agents.defaults.model?.primary;
 // Force update to Groq if using Gemini or other providers
-const validGroqModels = ["groq/llama-3.3-70b-versatile", "groq/llama-3.1-70b-versatile", "groq/llama-3.1-8b-instant", "groq/mixtral-8x7b-32768"];
+const validGroqModels = ["groq/llama-3.3-70b-versatile", "groq/llama-3.1-70b-versatile", "groq/llama-3.3-70b-versatile", "groq/mixtral-8x7b-32768"];
 const isValidGroqModel = currentModel && validGroqModels.includes(currentModel);
-// Use Groq llama-3.1-8b-instant for much higher daily token limit (TPD) - optimized for quota
+// Use Groq llama-3.3-70b-versatile for much higher daily token limit (TPD) - optimized for quota
 const defaultModel = defaultGroqModel;
 if (!isValidGroqModel || currentModel?.includes("gemini") || currentModel?.includes("google") || currentModel?.includes("70b")) {
   if (typeof cfg.agents.defaults.model === "string") {
@@ -322,7 +322,7 @@ echo "=== Checking environment variables ==="
 echo "PORT: ${PORT:-not set}"
 echo "TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:+set (hidden)}"
 echo "GROQ_API_KEY: ${GROQ_API_KEY:+set (hidden)}"
-echo "MOLT_PROVIDERS_GROQ_MODEL: ${MOLT_PROVIDERS_GROQ_MODEL:-llama-3.1-8b-instant (default)}"
+echo "MOLT_PROVIDERS_GROQ_MODEL: ${MOLT_PROVIDERS_GROQ_MODEL:-llama-3.3-70b-versatile (default)}"
 FARBUMP_WEB_URL_VALUE="${FARBUMP_WEB_URL:-${FARBUMP_API_URL:-https://farbump.vercel.app}}"
 echo "FARBUMP_WEB_URL: ${FARBUMP_WEB_URL_VALUE}"
 echo "CLAWDBOT_GATEWAY_TOKEN: ${CLAWDBOT_GATEWAY_TOKEN:+set (hidden)}"
