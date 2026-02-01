@@ -108,7 +108,7 @@ cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
 // Reduce bootstrap context size to prevent context overflow (llama-3.1-8b-instant has smaller context window ~8k tokens)
 // Very aggressive limit for small context models
-cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 500;
+cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 1000;
 // Use Groq llama-3.1-8b-instant as default (much higher daily token limit/TPD than 70b version)
 // Can be overridden via MOLT_PROVIDERS_GROQ_MODEL environment variable
 const envModel = process.env.MOLT_PROVIDERS_GROQ_MODEL;
