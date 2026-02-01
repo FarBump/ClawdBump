@@ -173,7 +173,7 @@ for (const key in cfg.skills.entries) {
 
 cfg.skills.entries.farbump = { enabled: true };
 
-// Reduce context size for llama-3.1-8b-instant (smaller context window ~8k tokens)
+
 // Configure compaction to prevent context overflow
 cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
 // Reserve more tokens for system prompt and workspace files to prevent overflow
@@ -185,7 +185,7 @@ cfg.agents.defaults.compaction.reserveTokensFloor = 2000; // Even higher buffer 
 // This ensures responses are direct, concise, and don't consume too many tokens
 // Set maxTokens and temperature per-model in models config (extraParams reads from models[modelKey].params)
 cfg.agents.defaults.models = cfg.agents.defaults.models ?? {};
-const modelKey = defaultModel; // e.g., "groq/llama-3.1-8b-instant"
+const modelKey = defaultModel; // e.g., "groq/llama-3.3-70b-versatile"
 cfg.agents.defaults.models[modelKey] = cfg.agents.defaults.models[modelKey] ?? {};
 cfg.agents.defaults.models[modelKey].params = cfg.agents.defaults.models[modelKey].params ?? {};
 cfg.agents.defaults.models[modelKey].params.maxTokens = 400;
