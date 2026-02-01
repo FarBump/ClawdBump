@@ -159,18 +159,19 @@ cfg.plugins.slots = { ...(cfg.plugins.slots ?? {}), memory: "none" };
 // Disable workspace skill loading for Railway (Telegram + FarBump only, no workspace skills needed)
 cfg.skills = cfg.skills ?? {};
 cfg.skills.load = cfg.skills.load ?? {};
+cfg.skills.entries = cfg.skills.entries ?? {};
+
 cfg.skills.load.watch = false;
 cfg.skills.load.extraDirs = [];
-// Disable ALL bundled skills (we only need FarBump skill which is in workspace)
 cfg.skills.allowBundled = [];
-// Disable all skills except FarBump (FarBump skill is loaded from workspace, not bundled)
-cfg.skills.entries = cfg.skills.entries ?? {};
-// Explicitly disable all other skills if they exist
+
 for (const key in cfg.skills.entries) {
   if (key !== "farbump") {
     cfg.skills.entries[key] = { ...(cfg.skills.entries[key] ?? {}), enabled: false };
   }
 }
+
+cfg.skills.entries.farbump = { enabled: true };
 
 // Configure compaction to prevent context overflow
 cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
@@ -193,6 +194,7 @@ cfg.agents.defaults.models[modelKey] = cfg.agents.defaults.models[modelKey] ?? {
 cfg.agents.defaults.models[modelKey].params = cfg.agents.defaults.models[modelKey].params ?? {};
 cfg.agents.defaults.models[modelKey].params.maxTokens = 400;
 cfg.agents.defaults.models[modelKey].params.temperature = 0.1;
+
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
@@ -256,7 +258,7 @@ ClawdBump AI Commander. FarBump engine. Uniswap v4.
 
 CRITICAL: Extremely concise. Short sentences. Save tokens.
 
-FAIL-FAST: If user'\''s FarBump data/account link not detected, DO NOT search/guess/use tools. Immediately respond: "I couldn'\''t detect your FarBump account. Please link it here: [FARBUMP_WEB_URL]/api/v1/auth/telegram/init"
+FAIL-FAST: If user'\''s FarBump data/account link not detected, say: "Please connect your account by clicking [Link Login FarBump](https://oauth.telegram.org/auth?bot_id=8456270009&origin=https%3A%2F%2Ffarbump.vercel.app&request_access=true&return_to=https%3A%2F%2Ffarbump.vercel.app%2F)"
 
 Bumping: Target, Volume, Interval, Duration → Route to FarBump.
 
