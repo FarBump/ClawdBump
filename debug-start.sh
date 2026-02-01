@@ -181,9 +181,11 @@ cfg.agents.defaults.compaction.reserveTokensFloor = 5000; // Even higher buffer 
 
 // Disable all tools to prevent tool call validation loops and context overflow
 // Force pure text responses only - no tool calls allowed
-cfg.agents.defaults.tools = cfg.agents.defaults.tools ?? {};
-cfg.agents.defaults.tools.allow = [];
-cfg.agents.defaults.tools.deny = ["*"]; // Deny all tools globally
+cfg.agents.tools = {
+  allow: [],
+  deny: ["*"]
+};
+
 
 // Limit output tokens to 400 and set temperature to 0.1 for Groq API
 // This ensures responses are direct, concise, and don't consume too many tokens
@@ -377,5 +379,5 @@ fi
 echo ""
 echo "=== Starting gateway ==="
 # gateway --bind expects a bind MODE (not an IP)
-exec node dist/entry.js gateway run --bind loopback --port ${PORT:-18789} --token "${CLAWDBOT_GATEWAY_TOKEN}"
+exec node dist/entry.js gateway --allow-unconfigured --bind loopback --port ${PORT:-18789} --token "${CLAWDBOT_GATEWAY_TOKEN}"
 
