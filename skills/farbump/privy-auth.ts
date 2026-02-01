@@ -121,7 +121,7 @@ export async function checkAuthStatus(
       `${statusUrl}?telegram_id=${telegramId}&session_id=${sessionId}`,
       {
         headers: {
-          'Authorization': `Bearer ${config.apiKey}`
+          'Authorization': `Bearer ${config.farbumpApiKey}`
         }
       }
     );
@@ -165,6 +165,7 @@ export async function verifySession(
   success: boolean;
   isValid: boolean;
   smartAccountAddress?: string;
+  privyUserId?: string;
   authToken?: string;
   error?: string;
 }> {
@@ -176,7 +177,7 @@ export async function verifySession(
       `${verifyUrl}?telegram_id=${telegramId}`,
       {
         headers: {
-          'Authorization': `Bearer ${config.apiKey}`
+          'Authorization': `Bearer ${config.farbumpApiKey}`
         }
       }
     );
@@ -194,6 +195,7 @@ export async function verifySession(
       success: true,
       isValid: data.is_valid,
       smartAccountAddress: data.smart_account_address,
+      privyUserId: data.privy_user_id,
       authToken: data.auth_token
     };
     
@@ -220,7 +222,7 @@ export async function revokeAuth(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`
+        'Authorization': `Bearer ${config.farbumpApiKey}`
       },
       body: JSON.stringify({
         telegram_id: telegramId
@@ -246,44 +248,23 @@ export async function revokeAuth(
 }
 
 /**
- * Generate authentication message for Telegram user
+ * Generate authentication message with instructions to open Mini App from bot menu
  * 
- * This creates a user-friendly message with authentication instructions
+ * Simple instruction to click "ClawdBump" in the left menu to open Mini App
  */
-export function generateAuthMessage(authUrl: string): {
+export function generateAuthMessage(telegramUser: TelegramUser): {
   message: string;
-  inlineKeyboard: any;
+  inlineKeyboard?: any;
 } {
-  const message = `🔐 **Authentication Required**
+  const message = `👋 **Welcome to ClawdBump!**
 
-Welcome to FarBump! To get started, you need to authenticate your account.
+To get started, click **"ClawdBump"** in the left menu (⬅️) to open the Mini App and login with your Telegram account.
 
-When you click "Login to FarBump" below:
-1. You'll be taken to our secure authentication page
-2. Complete the Privy authentication process
-3. A smart account will be automatically created for you
-4. Return here to start swapping!
+After logging in, your smart account will be automatically created and linked to your Telegram account.
 
-Your smart account will be created automatically and linked to your Telegram account.`;
+Type /help for commands.`;
 
-  const inlineKeyboard = {
-    inline_keyboard: [
-      [
-        {
-          text: '🔑 Login to FarBump',
-          url: authUrl
-        }
-      ],
-      [
-        {
-          text: '❓ What is Privy?',
-          callback_data: 'privy_info'
-        }
-      ]
-    ]
-  };
-  
-  return { message, inlineKeyboard };
+  return { message };
 }
 
 /**
@@ -360,32 +341,43 @@ export const sessionStore = new SessionStore();
 /**
  * Helper function to check if user is authenticated
  * Use this as middleware before executing swap commands
+ * 
+ * This function will:
+ * 1. Check local cache first (for performance)
+ * 2. If not found, verify with FarBump backend API
+ * 3. Return user's smart account address and Privy user ID if authenticated
  */
 export async function requireAuthentication(
-  telegramId: number
+  telegramId: number,
+  forceRefresh: boolean = false
 ): Promise<{
   authenticated: boolean;
   smartAccountAddress?: string;
+  privyUserId?: string;
   authToken?: string;
   message?: string;
 }> {
-  // Check local session first
-  const localSession = sessionStore.get(telegramId);
-  if (localSession?.smartAccountAddress && localSession?.authToken) {
-    return {
-      authenticated: true,
-      smartAccountAddress: localSession.smartAccountAddress,
-      authToken: localSession.authToken
-    };
+  // Check local session first (unless force refresh)
+  if (!forceRefresh) {
+    const localSession = sessionStore.get(telegramId);
+    if (localSession?.smartAccountAddress && localSession?.authToken) {
+      return {
+        authenticated: true,
+        smartAccountAddress: localSession.smartAccountAddress,
+        privyUserId: localSession.privyUserId,
+        authToken: localSession.authToken
+      };
+    }
   }
   
-  // Verify with backend
+  // Verify with backend API (always check to ensure user has logged in via Mini App)
   const verification = await verifySession(telegramId);
   
-  if (verification.success && verification.isValid) {
-    // Update local session
+  if (verification.success && verification.isValid && verification.smartAccountAddress) {
+    // Update local session with all available data
     sessionStore.save(telegramId, {
       smartAccountAddress: verification.smartAccountAddress,
+      privyUserId: verification.privyUserId,
       authToken: verification.authToken,
       createdAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
@@ -394,13 +386,14 @@ export async function requireAuthentication(
     return {
       authenticated: true,
       smartAccountAddress: verification.smartAccountAddress,
+      privyUserId: verification.privyUserId,
       authToken: verification.authToken
     };
   }
   
   return {
     authenticated: false,
-    message: '🔐 Please authenticate first using /start'
+    message: '🔐 Please authenticate first. Click "ClawdBump" in the left menu to open Mini App and login with Telegram.'
   };
 }
 

@@ -25,51 +25,31 @@ export async function handleStart(ctx: TelegramContext): Promise<{
   buttons?: any;
   parseMode?: string;
 }> {
-  // Check if user is already authenticated
-  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId);
+  // Check if user is already authenticated (force refresh to get latest status)
+  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId, true);
   
   if (authCheck.authenticated && authCheck.smartAccountAddress) {
     return {
       message: `👋 Welcome back!
 
-${PrivyAuth.formatSmartAccountInfo(authCheck.smartAccountAddress)}
+${PrivyAuth.formatSmartAccountInfo(authCheck.smartAccountAddress, authCheck.privyUserId)}
 
 Type /help to see available commands.`,
       parseMode: 'Markdown'
     };
   }
   
-  // Initiate new authentication
-  const authResult = await PrivyAuth.initiatePrivyAuth({
+  // Generate auth message with instructions to open Mini App from bot menu
+  const { message, inlineKeyboard } = PrivyAuth.generateAuthMessage({
     id: ctx.userId,
     username: ctx.username,
     first_name: ctx.firstName,
     last_name: ctx.lastName
   });
   
-  if (!authResult.success || !authResult.authUrl) {
-    return {
-      message: `❌ Failed to initiate authentication.
-
-Error: ${authResult.error}
-
-Please try again or contact support.`,
-      parseMode: 'Markdown'
-    };
-  }
-  
-  // Generate auth message with button
-  const { message, inlineKeyboard } = PrivyAuth.generateAuthMessage(authResult.authUrl);
-  
-  // Store session ID for polling
-  if (authResult.sessionId) {
-    // You might want to store this in a temporary cache
-    // For now, we'll poll on-demand when user tries to use commands
-  }
-  
   return {
     message,
-    buttons: inlineKeyboard,
+    ...(inlineKeyboard && { buttons: inlineKeyboard }),
     parseMode: 'Markdown'
   };
 }
@@ -82,17 +62,18 @@ export async function handleStatus(ctx: TelegramContext): Promise<{
   message: string;
   parseMode?: string;
 }> {
-  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId);
+  // Force refresh to get latest authentication status
+  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId, true);
   
   if (!authCheck.authenticated) {
     return {
-      message: '🔐 Not authenticated.\n\nUse /start to login.',
+      message: '🔐 Not authenticated.\n\nClick "ClawdBump" in the left menu to open Mini App and login with Telegram.',
       parseMode: 'Markdown'
     };
   }
   
   return {
-    message: PrivyAuth.formatSmartAccountInfo(authCheck.smartAccountAddress!),
+    message: PrivyAuth.formatSmartAccountInfo(authCheck.smartAccountAddress!, authCheck.privyUserId),
     parseMode: 'Markdown'
   };
 }
@@ -110,7 +91,7 @@ export async function handleBalance(ctx: TelegramContext): Promise<{
   
   if (!authCheck.authenticated) {
     return {
-      message: authCheck.message || '🔐 Please authenticate first using /start',
+      message: authCheck.message || '🔐 Please authenticate first. Click "ClawdBump" in the left menu to open Mini App and login with Telegram.',
       parseMode: 'Markdown'
     };
   }
@@ -152,7 +133,7 @@ export async function handleSwapIntent(
   
   if (!authCheck.authenticated) {
     return {
-      message: authCheck.message || '🔐 Please authenticate first using /start',
+      message: authCheck.message || '🔐 Please authenticate first. Click "ClawdBump" in the left menu to open Mini App and login with Telegram.',
       parseMode: 'Markdown'
     };
   }
@@ -273,7 +254,7 @@ export async function handleHistory(ctx: TelegramContext): Promise<{
   
   if (!authCheck.authenticated) {
     return {
-      message: authCheck.message || '🔐 Please authenticate first using /start',
+      message: authCheck.message || '🔐 Please authenticate first. Click "ClawdBump" in the left menu to open Mini App and login with Telegram.',
       parseMode: 'Markdown'
     };
   }
