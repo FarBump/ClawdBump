@@ -177,7 +177,7 @@ for (const key in cfg.skills.entries) {
 cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
 // Reserve more tokens for system prompt and workspace files to prevent overflow
 // For small context models, we need a larger buffer to prevent overflow
-cfg.agents.defaults.compaction.reserveTokensFloor = 5000; // Even higher buffer for very small context models
+cfg.agents.defaults.compaction.reserveTokensFloor = 2000; // Even higher buffer for very small context models
 
 
 // Limit output tokens to 400 and set temperature to 0.1 for Groq API
