@@ -102,36 +102,36 @@ cfg.channels.telegram.allowFrom = cfg.channels.telegram.allowFrom ?? ["*"];
 // Limit conversation history to last 5 messages to prevent context overflow
 cfg.channels.telegram.dmHistoryLimit = 5;
 
-// Ensure a default model is present (Groq). (Will fail if GROQ_API_KEY missing.)
+// Ensure a default model is present (Gemini). (Will fail if GEMINI_API_KEY missing.)
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-// Reduce bootstrap context size to prevent context overflow (llama-3.1-8b-instant has smaller context window ~8k tokens)
+// Reduce bootstrap context size to prevent context overflow
 // Very aggressive limit for small context models
 cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 500;
-// Use Groq llama-3.1-8b-instant as default (much higher daily token limit/TPD than 70b version)
-// Can be overridden via MOLT_PROVIDERS_GROQ_MODEL environment variable
-const envModel = process.env.MOLT_PROVIDERS_GROQ_MODEL;
-const defaultGroqModel = envModel ? `groq/${envModel}` : "groq/llama-3.1-8b-instant";
-// Groq provides better quota limits than Gemini and is more reliable for production
+// Use Gemini 1.5 Flash as default (most economical model with good quota limits)
+// Can be overridden via MOLT_PROVIDERS_GEMINI_MODEL environment variable
+const envModel = process.env.MOLT_PROVIDERS_GEMINI_MODEL;
+const defaultGeminiModel = envModel ? `google/${envModel}` : "google/gemini-1.5-flash";
+// Gemini 1.5 Flash is the most economical model with good free tier quota
 const currentModel = typeof cfg.agents.defaults.model === "string" 
   ? cfg.agents.defaults.model 
   : cfg.agents.defaults.model?.primary;
-// Force update to Groq if using Gemini or other providers
-const validGroqModels = ["groq/llama-3.3-70b-versatile", "groq/llama-3.1-70b-versatile", "groq/llama-3.1-8b-instant", "groq/mixtral-8x7b-32768"];
-const isValidGroqModel = currentModel && validGroqModels.includes(currentModel);
-// Use Groq llama-3.1-8b-instant for much higher daily token limit (TPD) - optimized for quota
-const defaultModel = defaultGroqModel;
-if (!isValidGroqModel || currentModel?.includes("gemini") || currentModel?.includes("google") || currentModel?.includes("70b")) {
+// Force update to Gemini if using Groq or other providers
+const validGeminiModels = ["google/gemini-1.5-flash", "google/gemini-1.5-pro", "google/gemini-3-flash-preview", "google/gemini-3-pro-preview"];
+const isValidGeminiModel = currentModel && validGeminiModels.includes(currentModel);
+// Use Gemini 1.5 Flash for most economical usage - optimized for quota
+const defaultModel = defaultGeminiModel;
+if (!isValidGeminiModel || currentModel?.includes("groq") || currentModel?.includes("llama")) {
   if (typeof cfg.agents.defaults.model === "string") {
     cfg.agents.defaults.model = defaultModel;
   } else {
     cfg.agents.defaults.model.primary = defaultModel;
   }
-  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (Groq - optimized for higher daily token limit/TPD)`);
+  console.log(`✅ Updated model from ${currentModel || "undefined"} to ${defaultModel} (Gemini - optimized for economical usage)`);
 } else {
   if (typeof cfg.agents.defaults.model === "string") {
-    // Keep as is if already using valid Groq model
+    // Keep as is if already using valid Gemini model
   } else {
     cfg.agents.defaults.model.primary = cfg.agents.defaults.model.primary ?? defaultModel;
   }
@@ -172,7 +172,6 @@ for (const key in cfg.skills.entries) {
   }
 }
 
-// Reduce context size for llama-3.1-8b-instant (smaller context window ~8k tokens)
 // Configure compaction to prevent context overflow
 cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
 // Reserve more tokens for system prompt and workspace files to prevent overflow
@@ -185,11 +184,11 @@ cfg.agents.defaults.tools = cfg.agents.defaults.tools ?? {};
 cfg.agents.defaults.tools.allow = [];
 cfg.agents.defaults.tools.deny = ["*"]; // Deny all tools globally
 
-// Limit output tokens to 400 and set temperature to 0.1 for Groq API
+// Limit output tokens to 400 and set temperature to 0.1 for Gemini API
 // This ensures responses are direct, concise, and don't consume too many tokens
 // Set maxTokens and temperature per-model in models config (extraParams reads from models[modelKey].params)
 cfg.agents.defaults.models = cfg.agents.defaults.models ?? {};
-const modelKey = defaultModel; // e.g., "groq/llama-3.1-8b-instant"
+const modelKey = defaultModel; // e.g., "google/gemini-1.5-flash"
 cfg.agents.defaults.models[modelKey] = cfg.agents.defaults.models[modelKey] ?? {};
 cfg.agents.defaults.models[modelKey].params = cfg.agents.defaults.models[modelKey].params ?? {};
 cfg.agents.defaults.models[modelKey].params.maxTokens = 400;
@@ -324,8 +323,8 @@ echo ""
 echo "=== Checking environment variables ==="
 echo "PORT: ${PORT:-not set}"
 echo "TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:+set (hidden)}"
-echo "GROQ_API_KEY: ${GROQ_API_KEY:+set (hidden)}"
-echo "MOLT_PROVIDERS_GROQ_MODEL: ${MOLT_PROVIDERS_GROQ_MODEL:-llama-3.1-8b-instant (default)}"
+echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (hidden)}"
+echo "MOLT_PROVIDERS_GEMINI_MODEL: ${MOLT_PROVIDERS_GEMINI_MODEL:-gemini-1.5-flash (default)}"
 FARBUMP_WEB_URL_VALUE="${FARBUMP_WEB_URL:-${FARBUMP_API_URL:-https://farbump.vercel.app}}"
 echo "FARBUMP_WEB_URL: ${FARBUMP_WEB_URL_VALUE}"
 echo "CLAWDBOT_GATEWAY_TOKEN: ${CLAWDBOT_GATEWAY_TOKEN:+set (hidden)}"
@@ -334,8 +333,8 @@ echo "CLAWDBOT_STATE_DIR: ${CLAWDBOT_STATE_DIR:-not set}"
 echo "CLAWDBOT_WORKSPACE_DIR: ${CLAWDBOT_WORKSPACE_DIR:-not set}"
 echo "CLAWDBOT_CONFIG_PATH: ${CLAWDBOT_CONFIG_PATH:-not set} (effective: ${CONFIG_PATH})"
 
-if [ -z "${GROQ_API_KEY:-}" ]; then
-  echo "⚠️  WARNING: GROQ_API_KEY is NOT set. AI replies will fail. (Set Railway variable GROQ_API_KEY)"
+if [ -z "${GEMINI_API_KEY:-}" ]; then
+  echo "⚠️  WARNING: GEMINI_API_KEY is NOT set. AI replies will fail. (Set Railway variable GEMINI_API_KEY)"
 fi
 
 echo ""

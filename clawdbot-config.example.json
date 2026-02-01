@@ -1,6 +1,6 @@
 {
   "agent": {
-    "model": "groq/llama-3.3-70b-versatile",
+    "model": "google/gemini-1.5-flash",
     "workspace": "~/.clawdbot/workspace"
   },
   "channels": {
