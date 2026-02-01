@@ -106,9 +106,9 @@ cfg.channels.telegram.dmHistoryLimit = 5;
 cfg.agents = cfg.agents ?? {};
 cfg.agents.defaults = cfg.agents.defaults ?? {};
 cfg.agents.defaults.model = cfg.agents.defaults.model ?? {};
-// Reduce bootstrap context size to prevent context overflow
+// Reduce bootstrap context size to prevent context overflow (llama-3.3-70b-versatile has smaller context window ~8k tokens)
 // Very aggressive limit for small context models
-cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 500;
+cfg.agents.defaults.bootstrapMaxChars = cfg.agents.defaults.bootstrapMaxChars ?? 1000;
 // Use Gemini 1.5 Flash as default (most economical model with good quota limits)
 // Can be overridden via MOLT_PROVIDERS_GEMINI_MODEL environment variable
 const envModel = process.env.MOLT_PROVIDERS_GEMINI_MODEL;
@@ -173,17 +173,13 @@ for (const key in cfg.skills.entries) {
 
 cfg.skills.entries.farbump = { enabled: true };
 
+
 // Configure compaction to prevent context overflow
 cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
 // Reserve more tokens for system prompt and workspace files to prevent overflow
 // For small context models, we need a larger buffer to prevent overflow
-cfg.agents.defaults.compaction.reserveTokensFloor = 5000; // Even higher buffer for very small context models
+cfg.agents.defaults.compaction.reserveTokensFloor = 2000; // Even higher buffer for very small context models
 
-// Disable all tools to prevent tool call validation loops and context overflow
-// Force pure text responses only - no tool calls allowed
-cfg.agents.defaults.tools = cfg.agents.defaults.tools ?? {};
-cfg.agents.defaults.tools.allow = [];
-cfg.agents.defaults.tools.deny = ["*"]; // Deny all tools globally
 
 // Limit output tokens to 400 and set temperature to 0.1 for Gemini API
 // This ensures responses are direct, concise, and don't consume too many tokens
@@ -378,5 +374,5 @@ fi
 echo ""
 echo "=== Starting gateway ==="
 # gateway --bind expects a bind MODE (not an IP)
-exec node dist/entry.js gateway run --bind loopback --port ${PORT:-18789} --token "${CLAWDBOT_GATEWAY_TOKEN}"
+exec node dist/entry.js gateway --allow-unconfigured --bind loopback --port ${PORT:-18789} --token "${CLAWDBOT_GATEWAY_TOKEN}"
 
