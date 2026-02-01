@@ -159,18 +159,21 @@ cfg.plugins.slots = { ...(cfg.plugins.slots ?? {}), memory: "none" };
 // Disable workspace skill loading for Railway (Telegram + FarBump only, no workspace skills needed)
 cfg.skills = cfg.skills ?? {};
 cfg.skills.load = cfg.skills.load ?? {};
+cfg.skills.entries = cfg.skills.entries ?? {};
+
+cfg.skills.load.maxSize = 2000;
+cfg.skills.load.maxFiles = 3;
 cfg.skills.load.watch = false;
 cfg.skills.load.extraDirs = [];
-// Disable ALL bundled skills (we only need FarBump skill which is in workspace)
 cfg.skills.allowBundled = [];
-// Disable all skills except FarBump (FarBump skill is loaded from workspace, not bundled)
-cfg.skills.entries = cfg.skills.entries ?? {};
-// Explicitly disable all other skills if they exist
+
 for (const key in cfg.skills.entries) {
   if (key !== "farbump") {
     cfg.skills.entries[key] = { ...(cfg.skills.entries[key] ?? {}), enabled: false };
   }
 }
+
+cfg.skills.entries.farbump = { enabled: true };
 
 // Reduce context size for llama-3.1-8b-instant (smaller context window ~8k tokens)
 // Configure compaction to prevent context overflow
