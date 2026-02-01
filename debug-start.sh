@@ -179,13 +179,6 @@ cfg.agents.defaults.compaction = cfg.agents.defaults.compaction ?? {};
 // For small context models, we need a larger buffer to prevent overflow
 cfg.agents.defaults.compaction.reserveTokensFloor = 5000; // Even higher buffer for very small context models
 
-// Disable all tools to prevent tool call validation loops and context overflow
-// Force pure text responses only - no tool calls allowed
-cfg.agents.tools = {
-  allow: [],
-  deny: ["*"]
-};
-
 
 // Limit output tokens to 400 and set temperature to 0.1 for Groq API
 // This ensures responses are direct, concise, and don't consume too many tokens
@@ -196,6 +189,7 @@ cfg.agents.defaults.models[modelKey] = cfg.agents.defaults.models[modelKey] ?? {
 cfg.agents.defaults.models[modelKey].params = cfg.agents.defaults.models[modelKey].params ?? {};
 cfg.agents.defaults.models[modelKey].params.maxTokens = 400;
 cfg.agents.defaults.models[modelKey].params.temperature = 0.1;
+cfg.agents.defaults.toolPolicy = "none";
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
