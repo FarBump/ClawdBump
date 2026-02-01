@@ -155,18 +155,18 @@ export async function checkAuthStatus(
 }
 
 /**
- * Step 3: Verify existing session
+ * Check user authentication status
  * 
- * Check if user already has valid authentication
+ * Fetches user registration status and wallet address from FarBump API
+ * This is the primary function for checking if a user is authenticated
  */
-export async function verifySession(
+export async function checkUserAuth(
   telegramId: number
 ): Promise<{
   success: boolean;
-  isValid: boolean;
-  smartAccountAddress?: string;
-  privyUserId?: string;
-  authToken?: string;
+  is_valid: boolean;
+  wallet_address?: string;
+  privy_user_id?: string;
   error?: string;
 }> {
   const config = getAuthConfig();
@@ -185,7 +185,7 @@ export async function verifySession(
     if (!response.ok) {
       return {
         success: true,
-        isValid: false
+        is_valid: false
       };
     }
     
@@ -193,19 +193,45 @@ export async function verifySession(
     
     return {
       success: true,
-      isValid: data.is_valid,
-      smartAccountAddress: data.smart_account_address,
-      privyUserId: data.privy_user_id,
-      authToken: data.auth_token
+      is_valid: data.is_valid || false,
+      wallet_address: data.smart_account_address || data.wallet_address,
+      privy_user_id: data.privy_user_id
     };
     
   } catch (error) {
     return {
       success: false,
-      isValid: false,
+      is_valid: false,
       error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
   }
+}
+
+/**
+ * Step 3: Verify existing session
+ * 
+ * Check if user already has valid authentication
+ * (Kept for backward compatibility)
+ */
+export async function verifySession(
+  telegramId: number
+): Promise<{
+  success: boolean;
+  isValid: boolean;
+  smartAccountAddress?: string;
+  privyUserId?: string;
+  authToken?: string;
+  error?: string;
+}> {
+  const authCheck = await checkUserAuth(telegramId);
+  
+  return {
+    success: authCheck.success,
+    isValid: authCheck.is_valid,
+    smartAccountAddress: authCheck.wallet_address,
+    privyUserId: authCheck.privy_user_id,
+    error: authCheck.error
+  };
 }
 
 /**
@@ -422,6 +448,7 @@ You can now:
 export const PrivyAuth = {
   initiatePrivyAuth,
   checkAuthStatus,
+  checkUserAuth,
   verifySession,
   revokeAuth,
   generateAuthMessage,

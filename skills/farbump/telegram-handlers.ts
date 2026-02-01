@@ -17,6 +17,34 @@ interface TelegramContext {
 }
 
 /**
+ * Check user authentication and return English response
+ * 
+ * This function checks if user is registered and returns appropriate English message
+ * along with wallet_address if authenticated
+ */
+async function checkUserAuth(telegramId: number): Promise<{
+  isAuthenticated: boolean;
+  walletAddress?: string;
+  message: string;
+}> {
+  const authResult = await PrivyAuth.checkUserAuth(telegramId);
+  
+  if (!authResult.success || !authResult.is_valid || !authResult.wallet_address) {
+    const miniAppLink = process.env.MINI_APP_LINK || process.env.FARBUMP_WEB_URL || 'https://farbump.vercel.app';
+    return {
+      isAuthenticated: false,
+      message: `Oops! It looks like your wallet isn't linked yet. 🤖\n\nPlease open the FarBump Mini App to activate your Privy Smart Account and start bumping: ${miniAppLink}`
+    };
+  }
+  
+  return {
+    isAuthenticated: true,
+    walletAddress: authResult.wallet_address,
+    message: `Welcome back! I've detected your wallet: \`${authResult.wallet_address}\`. How can I assist you with your $BUMP positions today?`
+  };
+}
+
+/**
  * Handler for /start command
  * Initiates Privy authentication flow
  */
@@ -25,31 +53,26 @@ export async function handleStart(ctx: TelegramContext): Promise<{
   buttons?: any;
   parseMode?: string;
 }> {
-  // Check if user is already authenticated (force refresh to get latest status)
-  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId, true);
+  // Check user authentication status
+  const authCheck = await checkUserAuth(ctx.userId);
   
-  if (authCheck.authenticated && authCheck.smartAccountAddress) {
+  if (authCheck.isAuthenticated && authCheck.walletAddress) {
     return {
-      message: `👋 Welcome back!
-
-${PrivyAuth.formatSmartAccountInfo(authCheck.smartAccountAddress, authCheck.privyUserId)}
-
-Type /help to see available commands.`,
+      message: authCheck.message + '\n\nType /help to see available commands.',
       parseMode: 'Markdown'
     };
   }
   
-  // Generate auth message with instructions to open Mini App from bot menu
-  const { message, inlineKeyboard } = PrivyAuth.generateAuthMessage({
-    id: ctx.userId,
-    username: ctx.username,
-    first_name: ctx.firstName,
-    last_name: ctx.lastName
-  });
-  
+  // User not authenticated - show instructions
+  const miniAppLink = process.env.MINI_APP_LINK || process.env.FARBUMP_WEB_URL || 'https://farbump.vercel.app';
   return {
-    message,
-    ...(inlineKeyboard && { buttons: inlineKeyboard }),
+    message: `👋 **Welcome to ClawdBump!**
+
+${authCheck.message}
+
+To get started, click **"ClawdBump"** in the left menu (⬅️) to open the Mini App and login with your Telegram account.
+
+After logging in, your smart account will be automatically created and linked to your Telegram account.`,
     parseMode: 'Markdown'
   };
 }
@@ -62,18 +85,10 @@ export async function handleStatus(ctx: TelegramContext): Promise<{
   message: string;
   parseMode?: string;
 }> {
-  // Force refresh to get latest authentication status
-  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId, true);
-  
-  if (!authCheck.authenticated) {
-    return {
-      message: '🔐 Not authenticated.\n\nClick "ClawdBump" in the left menu to open Mini App and login with Telegram.',
-      parseMode: 'Markdown'
-    };
-  }
+  const authCheck = await checkUserAuth(ctx.userId);
   
   return {
-    message: PrivyAuth.formatSmartAccountInfo(authCheck.smartAccountAddress!, authCheck.privyUserId),
+    message: authCheck.message,
     parseMode: 'Markdown'
   };
 }
@@ -87,17 +102,17 @@ export async function handleBalance(ctx: TelegramContext): Promise<{
   parseMode?: string;
 }> {
   // Check authentication
-  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId);
+  const authCheck = await checkUserAuth(ctx.userId);
   
-  if (!authCheck.authenticated) {
+  if (!authCheck.isAuthenticated || !authCheck.walletAddress) {
     return {
-      message: authCheck.message || '🔐 Please authenticate first. Click "ClawdBump" in the left menu to open Mini App and login with Telegram.',
+      message: authCheck.message,
       parseMode: 'Markdown'
     };
   }
   
   // Fetch balance
-  const balanceResult = await FarBumpTools.getBalance(authCheck.smartAccountAddress!);
+  const balanceResult = await FarBumpTools.getBalance(authCheck.walletAddress);
   
   if (!balanceResult.success || !balanceResult.balances) {
     return {
@@ -129,11 +144,11 @@ export async function handleSwapIntent(
   parseMode?: string;
 }> {
   // Check authentication
-  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId);
+  const authCheck = await checkUserAuth(ctx.userId);
   
-  if (!authCheck.authenticated) {
+  if (!authCheck.isAuthenticated || !authCheck.walletAddress) {
     return {
-      message: authCheck.message || '🔐 Please authenticate first. Click "ClawdBump" in the left menu to open Mini App and login with Telegram.',
+      message: authCheck.message,
       parseMode: 'Markdown'
     };
   }
@@ -161,7 +176,7 @@ Examples:
 From: ${swapIntent.amount} ${swapIntent.fromToken}
 To: ${swapIntent.toToken}
 
-Smart Account: \`${authCheck.smartAccountAddress}\`
+Wallet Address: \`${authCheck.walletAddress}\`
 
 Confirm this swap?`;
 
@@ -200,11 +215,11 @@ export async function handleSwapConfirm(
   parseMode?: string;
 }> {
   // Check authentication
-  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId);
+  const authCheck = await checkUserAuth(ctx.userId);
   
-  if (!authCheck.authenticated) {
+  if (!authCheck.isAuthenticated || !authCheck.walletAddress) {
     return {
-      message: '🔐 Session expired. Please use /start to login again.',
+      message: authCheck.message,
       parseMode: 'Markdown'
     };
   }
@@ -214,7 +229,7 @@ export async function handleSwapConfirm(
     fromToken,
     toToken,
     amount,
-    walletAddress: authCheck.smartAccountAddress!
+    walletAddress: authCheck.walletAddress
   });
   
   if (!swapResult.success) {
@@ -242,6 +257,68 @@ View on Explorer: https://etherscan.io/tx/${swapResult.txHash}`,
 }
 
 /**
+ * Handler for /bump command
+ * Start bumping a token (Uniswap v4 liquidity operations)
+ */
+export async function handleBump(
+  ctx: TelegramContext,
+  tokenAddress?: string
+): Promise<{
+  message: string;
+  parseMode?: string;
+}> {
+  // Check authentication
+  const authCheck = await checkUserAuth(ctx.userId);
+  
+  if (!authCheck.isAuthenticated || !authCheck.walletAddress) {
+    return {
+      message: authCheck.message,
+      parseMode: 'Markdown'
+    };
+  }
+  
+  if (!tokenAddress) {
+    return {
+      message: `❌ Please provide a token address.
+
+Usage: /bump <token_address>
+
+Example:
+/bump 0x1234567890abcdef1234567890abcdef12345678
+
+Your wallet: \`${authCheck.walletAddress}\``,
+      parseMode: 'Markdown'
+    };
+  }
+  
+  // Validate token address format
+  if (!/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
+    return {
+      message: `❌ Invalid token address format.
+
+Please provide a valid Ethereum address (0x followed by 40 hex characters).
+
+Example: /bump 0x1234567890abcdef1234567890abcdef12345678`,
+      parseMode: 'Markdown'
+    };
+  }
+  
+  // TODO: Implement actual bump logic via FarBump API
+  // For now, return confirmation message
+  return {
+    message: `🚀 **Bump Operation Initiated**
+
+Token Address: \`${tokenAddress}\`
+Wallet Address: \`${authCheck.walletAddress}\`
+
+Bump operation will be executed using your wallet address. This will interact with Uniswap v4 liquidity pools.
+
+Note: Full bump functionality will be implemented via FarBump API.`,
+    parseMode: 'Markdown'
+  };
+}
+
+/**
  * Handler for /history command
  * View transaction history
  */
@@ -250,18 +327,18 @@ export async function handleHistory(ctx: TelegramContext): Promise<{
   parseMode?: string;
 }> {
   // Check authentication
-  const authCheck = await PrivyAuth.requireAuthentication(ctx.userId);
+  const authCheck = await checkUserAuth(ctx.userId);
   
-  if (!authCheck.authenticated) {
+  if (!authCheck.isAuthenticated || !authCheck.walletAddress) {
     return {
-      message: authCheck.message || '🔐 Please authenticate first. Click "ClawdBump" in the left menu to open Mini App and login with Telegram.',
+      message: authCheck.message,
       parseMode: 'Markdown'
     };
   }
   
   // Fetch transaction history
   const historyResult = await FarBumpTools.getTransactionHistory(
-    authCheck.smartAccountAddress!,
+    authCheck.walletAddress,
     10
   );
   
@@ -406,6 +483,7 @@ export const TelegramHandlers = {
   handleStart,
   handleStatus,
   handleBalance,
+  handleBump,
   handleSwapIntent,
   handleSwapConfirm,
   handleHistory,
