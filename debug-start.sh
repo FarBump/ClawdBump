@@ -161,7 +161,6 @@ cfg.skills = cfg.skills ?? {};
 cfg.skills.load = cfg.skills.load ?? {};
 cfg.skills.entries = cfg.skills.entries ?? {};
 
-cfg.skills.load.maxSize = 2000;
 cfg.skills.load.watch = false;
 cfg.skills.load.extraDirs = [];
 cfg.skills.allowBundled = [];
