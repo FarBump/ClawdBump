@@ -189,7 +189,7 @@ cfg.agents.defaults.models[modelKey] = cfg.agents.defaults.models[modelKey] ?? {
 cfg.agents.defaults.models[modelKey].params = cfg.agents.defaults.models[modelKey].params ?? {};
 cfg.agents.defaults.models[modelKey].params.maxTokens = 400;
 cfg.agents.defaults.models[modelKey].params.temperature = 0.1;
-cfg.agents.defaults.toolPolicy = "none";
+
 
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
