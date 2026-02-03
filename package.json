@@ -7,7 +7,7 @@
     "start": "bash scripts/start-openclaw.sh"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": "22.13.1"
   },
   "dependencies": {
     "openclaw": "latest"
