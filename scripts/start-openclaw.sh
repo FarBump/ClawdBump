@@ -8,4 +8,5 @@ export PORT="${PORT:-18789}"
 export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}"
 
 # Run Gateway via npx (openclaw installed locally in build)
-exec npx openclaw gateway --port "$PORT" --bind 0.0.0.0 --verbose
+# --allow-unconfigured: jalankan tanpa openclaw setup (env vars cukup untuk Railway)
+exec npx openclaw gateway --port "$PORT" --bind 0.0.0.0 --allow-unconfigured --verbose
