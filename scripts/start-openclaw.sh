@@ -9,4 +9,5 @@ export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}"
 
 # Run Gateway via npx (openclaw installed locally in build)
 # --allow-unconfigured: jalankan tanpa openclaw setup (env vars cukup untuk Railway)
-exec npx openclaw gateway --port "$PORT" --bind 0.0.0.0 --allow-unconfigured --verbose
+# --bind lan: dengarkan di interface LAN agar Railway proxy bisa menjangkau (bukan 0.0.0.0)
+exec npx openclaw gateway --port "$PORT" --bind lan --allow-unconfigured --verbose
