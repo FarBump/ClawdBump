@@ -3,7 +3,7 @@ set -e
 
 npm install -g openclaw@latest
 
-openclaw onboard
+openclaw onboard --install-daemon
 # Railway provides PORT
 export PORT="${PORT:-18789}"
 
