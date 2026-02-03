@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "npm install -g openclaw@latest",
+    "build": "npm install",
     "start": "bash scripts/start-openclaw.sh"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "openclaw": "latest"
   }
 }
