@@ -5,6 +5,7 @@ npm install -g openclaw@latest
 
 openclaw onboard --install-daemon
 openclaw dashboard --no-open
+openclaw doctor --fix
 openclaw doctor --generate-gateway
 # Railway provides PORT
 export PORT="${PORT:-18789}"
