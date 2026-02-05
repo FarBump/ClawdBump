@@ -1,15 +1,18 @@
 {
-  "name": "clawdbumpbot",
-  "version": "1.0.0",
+  "name": "clawdbump",
   "private": true,
-  "scripts": {
-    "build": "npm install",
-    "start": "bash scripts/start-openclaw.sh"
-  },
+  "type": "module",
   "engines": {
     "node": "22.13.1"
   },
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "lint": "node -c src/server.js"
+  },
   "dependencies": {
-    "openclaw": "latest"
+    "express": "^5.1.0",
+    "http-proxy": "^1.18.1",
+    "tar": "^7.5.4"
   }
 }
